@@ -4,6 +4,12 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>भक्ति अनुगूँज - साधना एवं भजन ऐप</title>
+
+  <!-- वेबसाइट और ऐप के लिए लोगो (.png फॉर्मेट के साथ) -->
+  <link id="dynamic-favicon" rel="icon" type="image/png" href="bhakti%20anugoonj.png">
+  <link id="dynamic-apple-icon" rel="apple-touch-icon" href="bhakti%20anugoonj.png">
+  <meta name="theme-color" content="#bf360c">
+
   <style>
     :root {
       --primary: #bf360c;
@@ -25,6 +31,21 @@
       color: #ffffff;
       text-align: center;
       padding: 14px 10px;
+    }
+    .header-brand {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 12px;
+    }
+    .header-logo {
+      width: 54px;
+      height: 54px;
+      border-radius: 50%;
+      border: 2px solid #ffe082;
+      object-fit: cover;
+      background: #ffffff;
+      box-shadow: 0 2px 6px rgba(0,0,0,0.3);
     }
     header h1 { margin: 0; font-size: 1.5rem; }
     header p { margin: 4px 0 0; font-size: 0.95rem; opacity: 0.95; }
@@ -119,6 +140,17 @@
       cursor: pointer;
     }
     .option-btn:hover:not(:disabled) { background: #ffe0b2; }
+    .option-btn.correct-opt {
+      background: #c8e6c9 !important;
+      border-color: #2e7d32 !important;
+      color: #1b5e20 !important;
+      font-weight: bold;
+    }
+    .option-btn.wrong-opt {
+      background: #ffcdd2 !important;
+      border-color: #c62828 !important;
+      color: #b71c1c !important;
+    }
 
     .badge {
       display: inline-block;
@@ -175,8 +207,13 @@
 <body>
 
   <header role="banner">
-    <h1>भक्ति अनुगूँज</h1>
-    <p>ओरिजिनल डिवोशनल संगीत एवं सनातन साधना</p>
+    <div class="header-brand">
+      <img id="app-header-logo" src="bhakti%20anugoonj.png" alt="भक्ति अनुगूँज लोगो" class="header-logo" onerror="this.style.display='none'">
+      <div>
+        <h1>भक्ति अनुगूँज</h1>
+        <p>ओरिजिनल डिवोशनल संगीत एवं सनातन साधना</p>
+      </div>
+    </div>
   </header>
 
   <nav role="tablist" aria-label="मुख्य नेविगेशन टैब्स">
@@ -278,6 +315,7 @@
         <h2>ऑडियो भजन प्लेयर</h2>
         <p>यहाँ आप बिना ऐप से बाहर जाए सीधे भजन सुन सकते हैं और अपने फोन में डाउनलोड भी कर सकते हैं।</p>
 
+        <!-- पहला मुख्य भजन (हमेशा उपलब्ध) -->
         <div class="card" style="background:#fffdf9;">
           <h3>1. राधा तो दीवानी कहलाई (भक्ति अनुगूँज)</h3>
           <audio controls preload="metadata" aria-label="राधा तो दीवानी कहलाई भजन प्लेयर">
@@ -289,8 +327,11 @@
           </a>
         </div>
 
+        <!-- Google Sheet (कॉलम I और कॉलम J) से आने वाले नए ऑडियो भजन यहाँ अपने आप जुड़ेंगे -->
+        <div id="dynamic-audio-list"></div>
+
         <div class="card" style="background:#fffdf9;">
-          <h3>2. Spotify ऑनलाइन प्लेयर</h3>
+          <h3>Spotify ऑनलाइन प्लेयर</h3>
           <iframe 
             style="border-radius:12px; width:100%; height:152px; border:0;" 
             src="https://open.spotify.com/embed/track/2mEdL0SqQMNEjmYgqERJXU?utm_source=generator" 
@@ -400,6 +441,45 @@
   </main>
 
   <script>
+    // --- स्मार्ट लोगो लोडर (.png और .jpg दोनों को अपने आप पहचान लेगा) ---
+    (function initLogo() {
+      const candidateLogos = [
+        "bhakti anugoonj.png",
+        "bhakti anugoonj (1).png",
+        "bhakti_anugoonj.png",
+        "bhaktianugoonj.png",
+        "logo.png",
+        "bhakti anugoonj.jpg",
+        "bhakti anugoonj (1).jpg",
+        "bhakti_anugoonj.jpg",
+        "logo.jpg"
+      ];
+      function checkNext(idx) {
+        if (idx >= candidateLogos.length) return;
+        const img = new Image();
+        img.onload = function() {
+          const validUrl = candidateLogos[idx];
+          const headerImg = document.getElementById('app-header-logo');
+          if (headerImg) {
+            headerImg.src = validUrl;
+            headerImg.style.display = 'block';
+          }
+          const fav = document.getElementById('dynamic-favicon');
+          if (fav) {
+            fav.type = validUrl.endsWith('.png') ? 'image/png' : 'image/jpeg';
+            fav.href = validUrl;
+          }
+          const appleFav = document.getElementById('dynamic-apple-icon');
+          if (appleFav) appleFav.href = validUrl;
+        };
+        img.onerror = function() {
+          checkNext(idx + 1);
+        };
+        img.src = candidateLogos[idx];
+      }
+      checkNext(0);
+    })();
+
     function getStore(key, fallback) {
       try {
         const val = localStorage.getItem(key);
@@ -466,209 +546,62 @@
     let todayMalas = parseInt(getStore('ba_v4_today_malas', '0'), 10) || 0;
     if (savedMalaDate !== todayStr) {
       todayMalas = 0;
-      savedMalaDate = todayStr;
       setStore('ba_v4_mala_date', todayStr);
       setStore('ba_v4_today_malas', 0);
     }
 
-    // Complete 5-Tier Badge System (No gap between 1 Lakh and 10 Lakh)
-    function getBadge(totalPts) {
-      if (totalPts >= 1000000) return 'धर्मरक्षक';
-      if (totalPts >= 100000) return 'परम भक्त';
-      if (totalPts >= 10000) return 'भक्त';
-      if (totalPts >= 1000) return 'साधक';
+    function getBadgeTitle(pts) {
+      if (pts >= 1000000) return 'धर्मरक्षक';
+      if (pts >= 100000) return 'परम भक्त';
+      if (pts >= 10000) return 'भक्त';
+      if (pts >= 1000) return 'साधक';
       return 'जिज्ञासु';
     }
 
-    function formatIndianNumber(num) {
-      try { return Number(num).toLocaleString('en-IN'); } catch (e) { return String(num); }
-    }
-
-    function generateVerificationCode(name, city, mPts, qPts, tMalas) {
-      const secretSalt = 'BHAKTI_ANUGOONJ_KASHI_2026';
-      const raw = `${name.trim()}|${city.trim()}|M:${mPts}|Q:${qPts}|TM:${tMalas}|${secretSalt}`;
-      let h1 = 0xdeadbeef ^ raw.length;
-      let h2 = 0x41c6ce57 ^ raw.length;
+    function generateVerifyCode(name, pts, malas) {
+      const raw = (name || 'साधक') + '-' + pts + '-' + malas;
+      let hash = 0;
       for (let i = 0; i < raw.length; i++) {
-        const ch = raw.charCodeAt(i);
-        h1 = Math.imul(h1 ^ ch, 2654435761);
-        h2 = Math.imul(h2 ^ ch, 1597334677);
+        hash = ((hash << 5) - hash) + raw.charCodeAt(i);
+        hash |= 0;
       }
-      h1 = Math.imul(h1 ^ (h1 >>> 16), 2246822507) ^ Math.imul(h2 ^ (h2 >>> 13), 3266489909);
-      h2 = Math.imul(h2 ^ (h2 >>> 16), 2246822507) ^ Math.imul(h1 ^ (h1 >>> 13), 3266489909);
-      const hex1 = (h1 >>> 0).toString(16).toUpperCase().padStart(8, '0').slice(0, 5);
-      const hex2 = (h2 >>> 0).toString(36).toUpperCase().padStart(4, '0').slice(0, 4);
-      const checkDigit = ((mPts + qPts * 7 + tMalas * 13) % 97).toString().padStart(2, '0');
-      return `BA-${hex1}-${hex2}-${checkDigit}`;
+      const codeNum = Math.abs(hash % 900000) + 100000;
+      return 'BA-' + codeNum;
     }
 
-    function updateAllProfileUI() {
+    function updateAllStatsUI() {
       const totalPts = quizPoints + malaPoints;
-      const badge = getBadge(totalPts);
-      const vCode = generateVerificationCode(userName, userCity, malaPoints, quizPoints, totalMalas);
+      const badge = getBadgeTitle(totalPts);
 
       document.getElementById('home-user-name').textContent = userName;
-      document.getElementById('home-user-points').textContent = formatIndianNumber(totalPts);
       document.getElementById('home-user-badge').textContent = badge;
+      document.getElementById('home-user-points').textContent = totalPts;
+
+      document.getElementById('current-mantra-display').textContent = activeMantra;
+      document.getElementById('mala-count').textContent = malaCount;
+      document.getElementById('mala-today').textContent = todayMalas;
+      document.getElementById('mala-total').textContent = totalMalas;
+      document.getElementById('mala-points-display').textContent = malaPoints;
+      document.getElementById('jap-btn').textContent = `${activeMantra} जपें (मनका: ${malaCount} / 108)`;
 
       document.getElementById('wallet-user-name').textContent = userName;
       document.getElementById('wallet-user-city').textContent = userCity;
       document.getElementById('wallet-user-badge').textContent = badge;
-      document.getElementById('wallet-quiz-points').textContent = formatIndianNumber(quizPoints);
-      document.getElementById('wallet-mala-points').textContent = formatIndianNumber(malaPoints);
-      document.getElementById('wallet-today-malas').textContent = formatIndianNumber(todayMalas);
-      document.getElementById('wallet-total-malas').textContent = formatIndianNumber(totalMalas);
-      document.getElementById('wallet-total-points').textContent = formatIndianNumber(totalPts);
-      document.getElementById('wallet-verify-code').textContent = vCode;
-
-      const nameInput = document.getElementById('profile-name-input');
-      const cityInput = document.getElementById('profile-city-input');
-      if (userName !== 'साधक' && document.activeElement !== nameInput) nameInput.value = userName;
-      if (userCity !== 'काशी' && document.activeElement !== cityInput) cityInput.value = userCity;
-
-      setStore('ba_v4_quiz_pts', quizPoints);
-      setStore('ba_v4_mala_pts', malaPoints);
+      document.getElementById('wallet-mala-points').textContent = malaPoints;
+      document.getElementById('wallet-today-malas').textContent = todayMalas;
+      document.getElementById('wallet-total-malas').textContent = totalMalas;
+      document.getElementById('wallet-quiz-points').textContent = quizPoints;
+      document.getElementById('wallet-total-points').textContent = totalPts;
+      document.getElementById('wallet-verify-code').textContent = generateVerifyCode(userName, totalPts, totalMalas);
     }
 
-    document.getElementById('save-profile-btn').addEventListener('click', () => {
-      const nameVal = document.getElementById('profile-name-input').value.trim();
-      const cityVal = document.getElementById('profile-city-input').value.trim();
-      userName = nameVal !== '' ? nameVal : 'साधक';
-      userCity = cityVal !== '' ? cityVal : 'काशी';
-      setStore('ba_v4_name', userName);
-      setStore('ba_v4_city', userCity);
-      updateAllProfileUI();
-
-      const msg = document.getElementById('profile-save-msg');
-      msg.style.display = 'block';
-      msg.textContent = `प्रोफाइल सेव हो गई! स्वागत है, ${userName} (${userCity})।`;
-    });
-
-    // Official PNG Certificate Generator
-    document.getElementById('download-certificate-btn').addEventListener('click', () => {
-      const canvas = document.getElementById('cert-canvas');
-      const ctx = canvas.getContext('2d');
-      const totalPts = quizPoints + malaPoints;
-      const badge = getBadge(totalPts);
-      const vCode = generateVerificationCode(userName, userCity, malaPoints, quizPoints, totalMalas);
-      const issueDate = getTodayDateString();
-
-      const grad = ctx.createLinearGradient(0, 0, 900, 620);
-      grad.addColorStop(0, '#fff8f0');
-      grad.addColorStop(1, '#ffe0b2');
-      ctx.fillStyle = grad;
-      ctx.fillRect(0, 0, 900, 620);
-
-      ctx.strokeStyle = '#bf360c';
-      ctx.lineWidth = 12;
-      ctx.strokeRect(18, 18, 864, 584);
-
-      ctx.strokeStyle = '#ff6e40';
-      ctx.lineWidth = 3;
-      ctx.strokeRect(30, 30, 840, 560);
-
-      ctx.save();
-      ctx.fillStyle = 'rgba(191, 54, 12, 0.055)';
-      ctx.font = 'bold 26px system-ui, sans-serif';
-      ctx.rotate(-0.22);
-      for (let y = -100; y < 800; y += 110) {
-        for (let x = -200; x < 1000; x += 340) {
-          ctx.fillText(`भक्ति अनुगूँज • ${vCode}`, x, y);
-        }
-      }
-      ctx.restore();
-
-      ctx.fillStyle = '#bf360c';
-      ctx.fillRect(30, 30, 840, 95);
-
-      ctx.fillStyle = '#ffffff';
-      ctx.textAlign = 'center';
-      ctx.font = 'bold 36px system-ui, sans-serif';
-      ctx.fillText('🚩 भक्ति अनुगूँज - आधिकारिक साधना प्रमाण-पत्र 🚩', 450, 80);
-      ctx.font = '18px system-ui, sans-serif';
-      ctx.fillText('ओरिजिनल डिवोशनल संगीत एवं सनातन साधना मंच', 450, 110);
-
-      ctx.fillStyle = '#1a1a1a';
-      ctx.font = 'bold 30px system-ui, sans-serif';
-      ctx.fillText(`साधक का नाम: ${userName} (${userCity})`, 450, 178);
-
-      ctx.fillStyle = '#ffe082';
-      ctx.strokeStyle = '#bf360c';
-      ctx.lineWidth = 2;
-      ctx.fillRect(250, 200, 400, 54);
-      ctx.strokeRect(250, 200, 400, 54);
-
-      ctx.fillStyle = '#bf360c';
-      ctx.font = 'bold 26px system-ui, sans-serif';
-      ctx.fillText(`वर्तमान उपाधि: ${badge}`, 450, 236);
-
-      ctx.fillStyle = '#ffffff';
-      ctx.fillRect(80, 278, 740, 205);
-      ctx.strokeStyle = '#dcdcdc';
-      ctx.lineWidth = 2;
-      ctx.strokeRect(80, 278, 740, 205);
-
-      ctx.textAlign = 'left';
-      ctx.fillStyle = '#222222';
-      ctx.font = 'bold 24px system-ui, sans-serif';
-      ctx.fillText(`• कुल अर्जित साधना पॉइंट्स: ${formatIndianNumber(totalPts)}`, 115, 325);
-
-      ctx.font = '21px system-ui, sans-serif';
-      ctx.fillStyle = '#333333';
-      ctx.fillText(`• जप माला पॉइंट्स (100/माला): ${formatIndianNumber(malaPoints)}`, 115, 368);
-      ctx.fillText(`• धर्म क्विज़ पॉइंट्स (10/सही उत्तर): ${formatIndianNumber(quizPoints)}`, 115, 408);
-      ctx.fillText(`• पूर्ण जप मालाएं: आज ${todayMalas} माला | कुल ${formatIndianNumber(totalMalas)} माला (इष्ट जप: ${activeMantra})`, 115, 448);
-
-      ctx.fillStyle = '#fbe9e7';
-      ctx.fillRect(30, 510, 840, 80);
-
-      ctx.textAlign = 'center';
-      ctx.fillStyle = '#1b5e20';
-      ctx.font = 'bold 21px monospace, sans-serif';
-      ctx.fillText(`सुरक्षा सत्यापन कोड (Security ID): ${vCode}  |  दिनांक: ${issueDate}`, 450, 545);
-
-      ctx.fillStyle = '#555555';
-      ctx.font = '16px system-ui, sans-serif';
-      ctx.fillText('नोट: यह प्रमाण-पत्र क्रिप्टोग्राफिक सुरक्षा कोड द्वारा सत्यापित है। अंकों में बदलाव करने पर कोड अमान्य हो जाएगा।', 450, 575);
-
-      try {
-        const dataUrl = canvas.toDataURL('image/png');
-        const link = document.createElement('a');
-        const safeName = userName.replace(/[^a-zA-Z0-9\u0900-\u097F]/g, '_') || 'Sadhak';
-        link.download = `Bhakti_Anugoonj_Sadhana_Card_${safeName}_${issueDate}.png`;
-        link.href = dataUrl;
-        document.body.appendChild(link);
-        link.click();
-        document.body.removeChild(link);
-
-        const dlMsg = document.getElementById('download-msg');
-        dlMsg.style.display = 'block';
-        dlMsg.textContent = `आपका आधिकारिक साधना प्रमाण-पत्र (Image) डाउनलोड हो गया है! (सुरक्षा कोड: ${vCode})`;
-      } catch (err) {
-        const dlMsg = document.getElementById('download-msg');
-        dlMsg.style.display = 'block';
-        dlMsg.textContent = 'प्रमाण-पत्र तैयार करने में त्रुटि आई, कृपया पुनः प्रयास करें।';
-      }
-    });
-
-    // Jap Mala Logic
+    // --- JAP MALA LOGIC ---
     const mantraSelect = document.getElementById('mantra-select');
     const customMantraBox = document.getElementById('custom-mantra-box');
     const customMantraInput = document.getElementById('custom-mantra-input');
-    const currentMantraDisplay = document.getElementById('current-mantra-display');
-    const malaCountEl = document.getElementById('mala-count');
-    const malaTodayEl = document.getElementById('mala-today');
-    const malaTotalEl = document.getElementById('mala-total');
-    const malaPointsDisplayEl = document.getElementById('mala-points-display');
-    const japBtn = document.getElementById('jap-btn');
-    const malaAnnouncement = document.getElementById('mala-announcement');
 
-    const presetMantras = [
-      'राधा-राधा', 'हरे कृष्ण', 'श्री राम', 'ॐ नमः शिवाय',
-      'गायत्री मंत्र', 'हर हर महादेव', 'ॐ नमो भगवते वासुदेवाय'
-    ];
-
-    if (presetMantras.includes(activeMantra)) {
+    const presetValues = Array.from(mantraSelect.options).map(o => o.value);
+    if (presetValues.includes(activeMantra)) {
       mantraSelect.value = activeMantra;
     } else {
       mantraSelect.value = 'custom';
@@ -676,125 +609,315 @@
       customMantraInput.value = activeMantra;
     }
 
-    function updateMalaUI() {
-      currentMantraDisplay.textContent = activeMantra;
-      malaCountEl.textContent = malaCount;
-      malaTodayEl.textContent = formatIndianNumber(todayMalas);
-      malaTotalEl.textContent = formatIndianNumber(totalMalas);
-      malaPointsDisplayEl.textContent = formatIndianNumber(malaPoints);
-      japBtn.textContent = `${activeMantra} जपें (मनका: ${malaCount} / 108)`;
-      setStore('ba_v4_mala_cnt', malaCount);
-      setStore('ba_v4_today_malas', todayMalas);
-      setStore('ba_v4_malas_done', totalMalas);
-      setStore('ba_v4_mantra', activeMantra);
-    }
-
     mantraSelect.addEventListener('change', () => {
       if (mantraSelect.value === 'custom') {
         customMantraBox.style.display = 'block';
-        const val = customMantraInput.value.trim();
-        activeMantra = val !== '' ? val : 'सीताराम';
-        updateMalaUI();
         customMantraInput.focus();
       } else {
         customMantraBox.style.display = 'none';
         activeMantra = mantraSelect.value;
-        updateMalaUI();
+        setStore('ba_v4_mantra', activeMantra);
+        updateAllStatsUI();
       }
     });
 
     customMantraInput.addEventListener('input', () => {
       const val = customMantraInput.value.trim();
-      activeMantra = val !== '' ? val : 'इष्ट मंत्र';
-      updateMalaUI();
+      activeMantra = val ? val : 'राधा-राधा';
+      setStore('ba_v4_mantra', activeMantra);
+      updateAllStatsUI();
     });
 
-    japBtn.addEventListener('click', () => {
-      const nowDay = getTodayDateString();
-      if (savedMalaDate !== nowDay) {
-        todayMalas = 0;
-        savedMalaDate = nowDay;
-        setStore('ba_v4_mala_date', nowDay);
-      }
-
+    document.getElementById('jap-btn').addEventListener('click', () => {
       malaCount++;
-      if (navigator.vibrate) navigator.vibrate(35);
-
+      const announceEl = document.getElementById('mala-announcement');
       if (malaCount >= 108) {
         malaCount = 0;
         todayMalas++;
         totalMalas++;
         malaPoints += 100;
-        updateAllProfileUI();
-        if (navigator.vibrate) navigator.vibrate([120, 60, 120]);
-        malaAnnouncement.style.display = 'block';
-        malaAnnouncement.textContent = `अद्भुत साधना! आपकी '${activeMantra}' की 1 माला (108 जाप) पूर्ण हुई। आपको +100 साधना पॉइंट्स प्राप्त हुए! (आज की कुल माला: ${todayMalas})`;
+        setStore('ba_v4_today_malas', todayMalas);
+        setStore('ba_v4_malas_done', totalMalas);
+        setStore('ba_v4_mala_pts', malaPoints);
+
+        announceEl.style.display = 'block';
+        announceEl.textContent = `अद्भुत! आपकी 1 माला (108 मनके) पूर्ण हुई। आपको +100 साधना पॉइंट्स प्राप्त हुए! (आज की कुल माला: ${todayMalas})`;
       } else {
-        malaAnnouncement.style.display = 'none';
+        announceEl.style.display = 'none';
       }
-      updateMalaUI();
+      setStore('ba_v4_mala_cnt', malaCount);
+      updateAllStatsUI();
     });
 
     document.getElementById('reset-mala-btn').addEventListener('click', () => {
       malaCount = 0;
-      malaAnnouncement.style.display = 'block';
-      malaAnnouncement.textContent = 'वर्तमान अधूरी माला की मनका संख्या शून्य कर दी गई है।';
-      updateMalaUI();
+      setStore('ba_v4_mala_cnt', 0);
+      const announceEl = document.getElementById('mala-announcement');
+      announceEl.style.display = 'block';
+      announceEl.textContent = 'वर्तमान अधूरी माला शून्य कर दी गई है।';
+      updateAllStatsUI();
     });
 
-    // Live Quiz Logic (Directly Powered by Google Sheet)
-    let quizQuestions = [];
-    let savedQuizDate = getStore('ba_v5_quiz_date', todayStr);
-    let currentQIndex = parseInt(getStore('ba_v5_quiz_idx', '0'), 10) || 0;
-    let quizCompleted = getStore('ba_v5_quiz_done', 'false') === 'true';
-    let savedSetSignature = getStore('ba_v5_quiz_sig', '');
-    let currentQuestionAnswered = false;
+    // --- PROFILE LOGIC ---
+    document.getElementById('profile-name-input').value = userName !== 'साधक' ? userName : '';
+    document.getElementById('profile-city-input').value = userCity !== 'काशी' ? userCity : '';
 
-    if (savedQuizDate !== todayStr) {
-      currentQIndex = 0;
-      quizCompleted = false;
-      savedQuizDate = todayStr;
-      setStore('ba_v5_quiz_date', todayStr);
-      setStore('ba_v5_quiz_idx', 0);
-      setStore('ba_v5_quiz_done', 'false');
-    }
+    document.getElementById('save-profile-btn').addEventListener('click', () => {
+      const n = document.getElementById('profile-name-input').value.trim();
+      const c = document.getElementById('profile-city-input').value.trim();
+      userName = n || 'साधक';
+      userCity = c || 'काशी';
+      setStore('ba_v4_name', userName);
+      setStore('ba_v4_city', userCity);
+      updateAllStatsUI();
 
-    const quizProgressEl = document.getElementById('quiz-progress');
-    const quizTimerEl = document.getElementById('quiz-timer');
-    const timerSrAlertEl = document.getElementById('timer-sr-alert');
-    const quizQuestionEl = document.getElementById('quiz-question');
-    const quizOptionsEl = document.getElementById('quiz-options');
-    const quizFeedbackEl = document.getElementById('quiz-feedback');
-    const nextQuestionBtn = document.getElementById('next-question-btn');
+      const msg = document.getElementById('profile-save-msg');
+      msg.style.display = 'block';
+      msg.textContent = 'आपकी प्रोफाइल सफलतापूर्वक सेव हो गई है!';
+    });
 
-    let quizTimerInterval = null;
-    let timeLeft = 30;
+    // --- CERTIFICATE DOWNLOAD LOGIC ---
+    document.getElementById('download-certificate-btn').addEventListener('click', () => {
+      const canvas = document.getElementById('cert-canvas');
+      const ctx = canvas.getContext('2d');
+      const totalPts = quizPoints + malaPoints;
+      const badge = getBadgeTitle(totalPts);
+      const verifyId = generateVerifyCode(userName, totalPts, totalMalas);
 
-    function startQuizTimer() {
-      stopQuizTimer();
-      if (currentActiveTab !== 'quiz' || quizCompleted || currentQuestionAnswered || quizQuestions.length === 0) {
-        return;
+      ctx.fillStyle = '#fff8f0';
+      ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+      ctx.strokeStyle = '#bf360c';
+      ctx.lineWidth = 10;
+      ctx.strokeRect(20, 20, canvas.width - 40, canvas.height - 40);
+
+      ctx.strokeStyle = '#ff8f00';
+      ctx.lineWidth = 3;
+      ctx.strokeRect(32, 32, canvas.width - 64, canvas.height - 64);
+
+      ctx.fillStyle = '#bf360c';
+      ctx.textAlign = 'center';
+      ctx.font = 'bold 36px sans-serif';
+      ctx.fillText('भक्ति अनुगूँज - सनातन साधना प्रमाण-पत्र', canvas.width / 2, 100);
+
+      ctx.fillStyle = '#333333';
+      ctx.font = '22px sans-serif';
+      ctx.fillText('यह आधिकारिक रूप से प्रमाणित किया जाता है कि', canvas.width / 2, 165);
+
+      ctx.fillStyle = '#bf360c';
+      ctx.font = 'bold 34px sans-serif';
+      ctx.fillText(`${userName} (${userCity})`, canvas.width / 2, 220);
+
+      ctx.fillStyle = '#1a1a1a';
+      ctx.font = '22px sans-serif';
+      ctx.fillText('ने भक्ति अनुगूँज ऐप पर नियमित नाम-जाप एवं सनातन धर्म ज्ञान के माध्यम से', canvas.width / 2, 275);
+
+      ctx.fillStyle = '#e65100';
+      ctx.font = 'bold 30px sans-serif';
+      ctx.fillText(`सम्मानित उपाधि: "${badge}"`, canvas.width / 2, 330);
+
+      ctx.fillStyle = '#222222';
+      ctx.font = 'bold 22px sans-serif';
+      ctx.fillText(`कुल अर्जित पॉइंट्स: ${totalPts}  |  पूर्ण जप मालाएं: ${totalMalas}`, canvas.width / 2, 390);
+
+      ctx.fillStyle = '#1b5e20';
+      ctx.font = 'bold 20px sans-serif';
+      ctx.fillText(`सुरक्षा सत्यापन कोड (Security ID): ${verifyId}  |  दिनांक: ${todayStr}`, canvas.width / 2, 445);
+
+      ctx.fillStyle = '#bf360c';
+      ctx.font = 'italic 20px sans-serif';
+      ctx.fillText('“श्रद्धावान् लभते ज्ञानम्” — भक्ति अनुगूँज परिवार की ओर से हार्दिक शुभकामनाएँ!', canvas.width / 2, 520);
+
+      try {
+        const dataUrl = canvas.toDataURL('image/png');
+        const link = document.createElement('a');
+        link.download = `Bhakti_Anugoonj_Certificate_${userName}.png`;
+        link.href = dataUrl;
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
+
+        const dMsg = document.getElementById('download-msg');
+        dMsg.style.display = 'block';
+        dMsg.textContent = 'आपका प्रमाण-पत्र (PNG Image) सफलतापूर्वक डाउनलोड हो रहा है!';
+      } catch (err) {
+        alert('प्रमाण-पत्र डाउनलोड करने में त्रुटि हुई।');
       }
-      timeLeft = 30;
-      quizTimerEl.textContent = `समय: ${timeLeft} सेक.`;
-      quizTimerEl.style.color = '#b71c1c';
-      quizTimerEl.style.background = '#ffebee';
-      timerSrAlertEl.textContent = '';
+    });
 
-      quizTimerInterval = setInterval(() => {
-        timeLeft--;
-        if (timeLeft > 0) {
-          quizTimerEl.textContent = `समय: ${timeLeft} सेक.`;
-          if (timeLeft === 10) {
-            quizTimerEl.style.background = '#ffcdd2';
-            timerSrAlertEl.textContent = '10 सेकंड शेष हैं।';
+    // --- DHARMA QUIZ & GOOGLE SHEET SYNC (30 QUESTIONS + VIDEO + SUVICHAR + DYNAMIC AUDIO) ---
+    const SHEET_ID = '1ZNn71F4f4Wyk1lxpnLLkT89bBXGm0uN_FaTGOBloNPY';
+    const SHEET_CSV_URL = `https://docs.google.com/spreadsheets/d/${SHEET_ID}/export?format=csv`;
+
+    const defaultQuestions = [
+      { q: "श्रीमद्भगवद्गीता में कुल कितने अध्याय हैं?", opts: ["12 अध्याय", "16 अध्याय", "18 अध्याय", "20 अध्याय"], ans: 2 },
+      { q: "भगवान श्रीराम के धनुष का क्या नाम था?", opts: ["पिनाक", "गांडीव", "कोदंड", "शारंग"], ans: 2 },
+      { q: "गायत्री मंत्र मुख्य रूप से किस वेद से लिया गया है?", opts: ["ऋग्वेद", "यजुर्वेद", "सामवेद", "अथर्ववेद"], ans: 0 },
+      { q: "भगवान श्रीकृष्ण के शंख का क्या नाम था?", opts: ["पांचजन्य", "देवदत्त", "पौंड्र", "अनंतविजय"], ans: 0 },
+      { q: "सनातन धर्म में कुल कितने मुख्य पुराण (महापुराण) माने गए हैं?", opts: ["10 पुराण", "12 पुराण", "18 पुराण", "24 पुराण"], ans: 2 }
+    ];
+
+    let quizData = defaultQuestions.slice();
+    let currentQIndex = 0;
+    let quizLocked = false;
+    let quizTimerInterval = null;
+    let timeRemaining = 30;
+
+    let savedQuizDate = getStore('ba_v4_quiz_date', '');
+    if (savedQuizDate !== todayStr) {
+      setStore('ba_v4_quiz_date', todayStr);
+      setStore('ba_v4_quiz_idx', '0');
+      setStore('ba_v4_quiz_done_today', 'false');
+    }
+    currentQIndex = parseInt(getStore('ba_v4_quiz_idx', '0'), 10) || 0;
+    let isQuizDoneToday = getStore('ba_v4_quiz_done_today', 'false') === 'true';
+
+    function parseCSV(text) {
+      const rows = [];
+      let row = [];
+      let cur = '';
+      let inQuotes = false;
+      for (let i = 0; i < text.length; i++) {
+        const ch = text[i];
+        if (inQuotes) {
+          if (ch === '"' && text[i + 1] === '"') {
+            cur += '"';
+            i++;
+          } else if (ch === '"') {
+            inQuotes = false;
+          } else {
+            cur += ch;
           }
         } else {
-          stopQuizTimer();
-          quizTimerEl.textContent = 'समय समाप्त!';
-          handleTimeOut();
+          if (ch === '"') {
+            inQuotes = true;
+          } else if (ch === ',') {
+            row.push(cur.trim());
+            cur = '';
+          } else if (ch === '\n' || ch === '\r') {
+            if (cur !== '' || row.length > 0) {
+              row.push(cur.trim());
+              rows.push(row);
+              row = [];
+              cur = '';
+            }
+          } else {
+            cur += ch;
+          }
         }
-      }, 1000);
+      }
+      if (cur !== '' || row.length > 0) {
+        row.push(cur.trim());
+        rows.push(row);
+      }
+      return rows;
+    }
+
+    function renderDynamicAudios(audioItems) {
+      const container = document.getElementById('dynamic-audio-list');
+      if (!container) return;
+      container.innerHTML = '';
+
+      audioItems.forEach((item, idx) => {
+        const card = document.createElement('div');
+        card.className = 'card';
+        card.style.background = '#fffdf9';
+
+        const h3 = document.createElement('h3');
+        h3.textContent = `${idx + 2}. ${item.title}`;
+        card.appendChild(h3);
+
+        const audio = document.createElement('audio');
+        audio.controls = true;
+        audio.preload = 'metadata';
+        audio.setAttribute('aria-label', `${item.title} भजन प्लेयर`);
+
+        const source = document.createElement('source');
+        source.src = item.file;
+        source.type = 'audio/mpeg';
+        audio.appendChild(source);
+        card.appendChild(audio);
+
+        const dlLink = document.createElement('a');
+        dlLink.href = item.file;
+        dlLink.setAttribute('download', item.file);
+        dlLink.className = 'btn-link secondary-btn';
+        dlLink.style.marginTop = '12px';
+        dlLink.textContent = 'यह भजन फोन में डाउनलोड करें (MP3)';
+        card.appendChild(dlLink);
+
+        container.appendChild(card);
+      });
+    }
+
+    async function loadSheetData() {
+      try {
+        const response = await fetch(SHEET_CSV_URL + '&t=' + Date.now());
+        if (!response.ok) throw new Error('Network error');
+        const csvText = await response.text();
+        const rows = parseCSV(csvText);
+
+        if (rows.length > 1) {
+          const parsedQuestions = [];
+          const extraAudios = [];
+
+          for (let i = 1; i < rows.length; i++) {
+            const r = rows[i];
+            // कॉलम A से F: सनातन धर्म क्विज़ के प्रश्न
+            if (r[0] && r[1] && r[2] && r[3] && r[4]) {
+              let ansIdx = 0;
+              const rawAns = String(r[5] || '').trim().toUpperCase();
+              if (rawAns === 'A' || rawAns === '1') ansIdx = 0;
+              else if (rawAns === 'B' || rawAns === '2') ansIdx = 1;
+              else if (rawAns === 'C' || rawAns === '3') ansIdx = 2;
+              else if (rawAns === 'D' || rawAns === '4') ansIdx = 3;
+              else if (!isNaN(parseInt(rawAns, 10))) {
+                const n = parseInt(rawAns, 10);
+                ansIdx = (n >= 1 && n <= 4) ? n - 1 : n;
+              }
+              parsedQuestions.push({
+                q: r[0],
+                opts: [r[1], r[2], r[3], r[4]],
+                ans: ansIdx
+              });
+            }
+
+            // कॉलम G: लेटेस्ट YouTube वीडियो लिंक (पहली पंक्ति से)
+            if (i === 1 && r[6] && r[6].startsWith('http')) {
+              document.getElementById('home-youtube-link').href = r[6];
+              document.getElementById('video-tab-youtube-link').href = r[6];
+            }
+
+            // कॉलम H: आज का सुविचार (पहली पंक्ति से)
+            if (i === 1 && r[7]) {
+              document.getElementById('home-thought-text').textContent = r[7];
+            }
+
+            // कॉलम I (r[8]): भजन का नाम | कॉलम J (r[9]): MP3 फाइल का नाम या लिंक
+            if (r[8] && r[9]) {
+              const bTitle = r[8].trim();
+              const bFile = r[9].trim();
+              if (
+                bTitle.toLowerCase() !== 'bhajan title' &&
+                bTitle !== 'भजन का नाम' &&
+                bFile !== 'radha-to-diwani-kahlai.mp3'
+              ) {
+                extraAudios.push({ title: bTitle, file: bFile });
+              }
+            }
+          }
+
+          if (parsedQuestions.length > 0) {
+            quizData = parsedQuestions;
+          }
+          if (extraAudios.length > 0) {
+            renderDynamicAudios(extraAudios);
+          }
+        }
+      } catch (e) {
+        // ऑफलाइन या एरर होने पर डिफ़ॉल्ट प्रश्न काम करेंगे
+      }
+      renderQuizUI(currentActiveTab === 'quiz');
     }
 
     function stopQuizTimer() {
@@ -804,213 +927,132 @@
       }
     }
 
-    function handleTimeOut() {
-      if (currentQuestionAnswered || quizQuestions.length === 0) return;
-      currentQuestionAnswered = true;
-      const qObj = quizQuestions[currentQIndex];
-      const allBtns = quizOptionsEl.querySelectorAll('button');
-      allBtns.forEach(b => b.disabled = true);
+    function startQuizTimer() {
+      stopQuizTimer();
+      timeRemaining = 30;
+      const timerEl = document.getElementById('quiz-timer');
+      const srAlert = document.getElementById('timer-sr-alert');
+      timerEl.textContent = `समय: ${timeRemaining} सेक.`;
 
-      if (allBtns[qObj.answer]) {
-        allBtns[qObj.answer].style.background = '#c8e6c9';
-      }
+      quizTimerInterval = setInterval(() => {
+        timeRemaining--;
+        timerEl.textContent = `समय: ${timeRemaining} सेक.`;
+        if (timeRemaining === 10) {
+          srAlert.textContent = 'केवल 10 सेकंड शेष हैं।';
+        }
+        if (timeRemaining <= 0) {
+          stopQuizTimer();
+          handleQuizTimeout();
+        }
+      }, 1000);
+    }
 
-      const rightAnswerText = qObj.options[qObj.answer] || '';
-      quizFeedbackEl.style.display = 'block';
-      quizFeedbackEl.style.background = '#fffde7';
-      quizFeedbackEl.style.color = '#f57f17';
-      quizFeedbackEl.textContent = `समय समाप्त! (0 पॉइंट्स)। सही उत्तर था: ${rightAnswerText}।`;
+    function handleQuizTimeout() {
+      if (quizLocked) return;
+      quizLocked = true;
+      const qObj = quizData[currentQIndex];
+      const allBtns = document.querySelectorAll('#quiz-options .option-btn');
+      allBtns.forEach((btn, idx) => {
+        btn.disabled = true;
+        if (idx === qObj.ans) btn.classList.add('correct-opt');
+      });
 
-      nextQuestionBtn.textContent = (currentQIndex + 1 < quizQuestions.length) ? 'अगला प्रश्न' : 'क्विज़ परिणाम देखें';
-      nextQuestionBtn.style.display = 'block';
-      nextQuestionBtn.focus();
+      const fb = document.getElementById('quiz-feedback');
+      fb.style.display = 'block';
+      fb.style.background = '#ffebee';
+      fb.style.color = '#b71c1c';
+      fb.textContent = `समय समाप्त! इस प्रश्न का सही उत्तर था: "${qObj.opts[qObj.ans]}"`;
+
+      document.getElementById('next-question-btn').style.display = 'block';
     }
 
     function renderQuizUI(shouldStartTimer) {
       stopQuizTimer();
+      const progEl = document.getElementById('quiz-progress');
+      const qEl = document.getElementById('quiz-question');
+      const optsEl = document.getElementById('quiz-options');
+      const fbEl = document.getElementById('quiz-feedback');
+      const nextBtn = document.getElementById('next-question-btn');
 
-      if (quizQuestions.length === 0) {
-        quizProgressEl.textContent = 'दैनिक प्रश्न लोड हो रहे हैं...';
-        quizTimerEl.textContent = 'प्रतीक्षा करें';
-        quizQuestionEl.textContent = 'कृपया सुनिश्चित करें कि इंटरनेट चालू है। प्रश्न लोड हो रहे हैं...';
-        quizOptionsEl.innerHTML = '';
-        quizFeedbackEl.style.display = 'none';
-        nextQuestionBtn.style.display = 'none';
+      if (isQuizDoneToday || currentQIndex >= quizData.length) {
+        isQuizDoneToday = true;
+        setStore('ba_v4_quiz_done_today', 'true');
+        progEl.textContent = `आज के सभी ${quizData.length} प्रश्न पूर्ण!`;
+        document.getElementById('quiz-timer').textContent = 'पूर्ण';
+        qEl.textContent = 'बधाई हो! आपने आज की सनातन धर्म क्विज़ सफलतापूर्वक पूर्ण कर ली है। कल नए प्रश्नों के साथ पुनः पधारें!';
+        optsEl.innerHTML = '';
+        fbEl.style.display = 'none';
+        nextBtn.style.display = 'none';
         return;
       }
 
-      if (quizCompleted || currentQIndex >= quizQuestions.length) {
-        quizCompleted = true;
-        setStore('ba_v5_quiz_done', 'true');
-        quizProgressEl.textContent = `आज की क्विज़ पूर्ण (${quizQuestions.length} / ${quizQuestions.length})`;
-        quizTimerEl.textContent = 'पूर्ण';
-        quizQuestionEl.textContent = `बधाई ${userName} जी! आपने आज के सभी ${quizQuestions.length} प्रश्नों की क्विज़ पूरी कर ली है। आपके कुल क्विज़ पॉइंट्स: ${formatIndianNumber(quizPoints)} हैं। कल नए प्रश्नों के लिए पुनः पधारें या जप माला से अनलिमिटेड पॉइंट्स अर्जित करें!`;
-        quizOptionsEl.innerHTML = '';
-        quizFeedbackEl.style.display = 'none';
-        nextQuestionBtn.style.display = 'none';
-        return;
-      }
+      quizLocked = false;
+      const qObj = quizData[currentQIndex];
+      progEl.textContent = `प्रश्न ${currentQIndex + 1} / ${quizData.length}`;
+      qEl.textContent = qObj.q;
+      optsEl.innerHTML = '';
+      fbEl.style.display = 'none';
+      nextBtn.style.display = 'none';
 
-      currentQuestionAnswered = false;
-      const qObj = quizQuestions[currentQIndex];
-      const cleanQuestionText = qObj.q.replace(/^\d+[\.\)\-\s]+/, '').trim();
-
-      quizProgressEl.textContent = `प्रश्न ${currentQIndex + 1} / ${quizQuestions.length} (कुल क्विज़ पॉइंट्स: ${formatIndianNumber(quizPoints)})`;
-      quizQuestionEl.textContent = `प्रश्न ${currentQIndex + 1}: ${cleanQuestionText}`;
-      quizOptionsEl.innerHTML = '';
-      quizFeedbackEl.style.display = 'none';
-      quizFeedbackEl.textContent = '';
-      nextQuestionBtn.style.display = 'none';
-
-      qObj.options.forEach((optText, idx) => {
+      qObj.opts.forEach((optText, idx) => {
         const btn = document.createElement('button');
         btn.type = 'button';
         btn.className = 'option-btn';
         btn.textContent = optText;
-        btn.addEventListener('click', () => handleAnswer(idx, btn));
-        quizOptionsEl.appendChild(btn);
+        btn.addEventListener('click', () => handleAnswerClick(idx, btn));
+        optsEl.appendChild(btn);
       });
 
-      if (shouldStartTimer && currentActiveTab === 'quiz') {
+      if (shouldStartTimer) {
         startQuizTimer();
-      } else {
-        quizTimerEl.textContent = 'समय: 30 सेक.';
       }
     }
 
-    function handleAnswer(selectedIndex, clickedBtn) {
-      if (currentQuestionAnswered) return;
-      currentQuestionAnswered = true;
+    function handleAnswerClick(selectedIdx, clickedBtn) {
+      if (quizLocked) return;
+      quizLocked = true;
       stopQuizTimer();
 
-      const qObj = quizQuestions[currentQIndex];
-      const allBtns = quizOptionsEl.querySelectorAll('button');
+      const qObj = quizData[currentQIndex];
+      const allBtns = document.querySelectorAll('#quiz-options .option-btn');
       allBtns.forEach(b => b.disabled = true);
 
-      if (selectedIndex === qObj.answer) {
-        clickedBtn.style.background = '#c8e6c9';
-        clickedBtn.style.borderColor = '#2e7d32';
+      const fb = document.getElementById('quiz-feedback');
+      fb.style.display = 'block';
+
+      if (selectedIdx === qObj.ans) {
+        clickedBtn.classList.add('correct-opt');
         quizPoints += 10;
-        updateAllProfileUI();
+        setStore('ba_v4_quiz_pts', quizPoints);
+        updateAllStatsUI();
 
-        quizFeedbackEl.style.display = 'block';
-        quizFeedbackEl.style.background = '#e8f5e9';
-        quizFeedbackEl.style.color = '#1b5e20';
-        quizFeedbackEl.textContent = `सत्य वचन! आपका उत्तर बिल्कुल सही है। (+10 पॉइंट्स, कुल क्विज़ पॉइंट्स: ${formatIndianNumber(quizPoints)})`;
+        fb.style.background = '#e8f5e9';
+        fb.style.color = '#1b5e20';
+        fb.textContent = 'बिल्कुल सही उत्तर! आपको +10 साधना पॉइंट्स प्राप्त हुए।';
       } else {
-        clickedBtn.style.background = '#ffcdd2';
-        clickedBtn.style.borderColor = '#b71c1c';
-        if (allBtns[qObj.answer]) {
-          allBtns[qObj.answer].style.background = '#c8e6c9';
-        }
+        clickedBtn.classList.add('wrong-opt');
+        if (allBtns[qObj.ans]) allBtns[qObj.ans].classList.add('correct-opt');
 
-        const rightAnswerText = qObj.options[qObj.answer] || '';
-        quizFeedbackEl.style.display = 'block';
-        quizFeedbackEl.style.background = '#ffebee';
-        quizFeedbackEl.style.color = '#b71c1c';
-        quizFeedbackEl.textContent = `आपका उत्तर गलत है (0 पॉइंट्स)। सही उत्तर था: ${rightAnswerText}।`;
+        fb.style.background = '#ffebee';
+        fb.style.color = '#b71c1c';
+        fb.textContent = `गलत उत्तर! सही उत्तर है: "${qObj.opts[qObj.ans]}"`;
       }
 
-      quizProgressEl.textContent = `प्रश्न ${currentQIndex + 1} / ${quizQuestions.length} (कुल क्विज़ पॉइंट्स: ${formatIndianNumber(quizPoints)})`;
-      nextQuestionBtn.textContent = (currentQIndex + 1 < quizQuestions.length) ? 'अगला प्रश्न' : 'क्विज़ परिणाम देखें';
-      nextQuestionBtn.style.display = 'block';
-      nextQuestionBtn.focus();
+      const nextBtn = document.getElementById('next-question-btn');
+      nextBtn.style.display = 'block';
+      nextBtn.focus();
     }
 
-    nextQuestionBtn.addEventListener('click', () => {
+    document.getElementById('next-question-btn').addEventListener('click', () => {
       currentQIndex++;
-      if (currentQIndex >= quizQuestions.length) {
-        quizCompleted = true;
-        setStore('ba_v5_quiz_done', 'true');
-      }
-      setStore('ba_v5_quiz_idx', currentQIndex);
+      setStore('ba_v4_quiz_idx', currentQIndex);
       renderQuizUI(true);
-      quizQuestionEl.focus();
+      document.getElementById('quiz-question').focus();
     });
 
-    // Live Google Sheet Data Processing
-    const SHEET_ID = '1ZNn71F4f4Wyk1lxpnLLkT89bBXGm0uN_FaTGOBloNPY';
-
-    function applyFetchedSheetData(fetchedQuestions, latestVideoUrl, latestThought) {
-      if (latestVideoUrl) {
-        document.getElementById('home-youtube-link').href = latestVideoUrl;
-        document.getElementById('video-tab-youtube-link').href = latestVideoUrl;
-      }
-      if (latestThought) {
-        document.getElementById('home-thought-text').textContent = latestThought;
-      }
-      if (fetchedQuestions.length > 0) {
-        const newSig = fetchedQuestions.length + ':' + fetchedQuestions[0].q + ':' + fetchedQuestions[fetchedQuestions.length - 1].q;
-        if (savedSetSignature !== newSig) {
-          savedSetSignature = newSig;
-          currentQIndex = 0;
-          quizCompleted = false;
-          setStore('ba_v5_quiz_sig', newSig);
-          setStore('ba_v5_quiz_idx', 0);
-          setStore('ba_v5_quiz_done', 'false');
-        }
-        quizQuestions = fetchedQuestions;
-        if (!currentQuestionAnswered) {
-          renderQuizUI(currentActiveTab === 'quiz');
-        }
-      }
-    }
-
-    window.handleSheetJsonp = function(response) {
-      try {
-        if (!response || !response.table || !response.table.rows) return;
-        const rows = response.table.rows;
-        const fetchedQuestions = [];
-        let latestVideoUrl = '';
-        let latestThought = '';
-
-        for (let i = 0; i < rows.length; i++) {
-          const c = rows[i].c;
-          if (!c) continue;
-          const getVal = (idx) => (c[idx] && c[idx].v !== null && c[idx].v !== undefined) ? String(c[idx].v).trim() : '';
-
-          const qText = getVal(0);
-          const opt1 = getVal(1);
-          const opt2 = getVal(2);
-          const opt3 = getVal(3);
-          const opt4 = getVal(4);
-          const ansRaw = getVal(5);
-          const ytLink = getVal(6);
-          const thoughtText = getVal(7);
-
-          if (qText.toLowerCase() === 'question' || qText === 'प्रश्न') continue;
-
-          if (ytLink && ytLink.startsWith('http') && !latestVideoUrl) latestVideoUrl = ytLink;
-          if (thoughtText && !latestThought) latestThought = thoughtText;
-
-          if (qText && opt1 && opt2 && opt3 && opt4) {
-            let ansIdx = parseInt(ansRaw, 10);
-            if (isNaN(ansIdx) || ansIdx < 0 || ansIdx > 3) ansIdx = 0;
-            fetchedQuestions.push({
-              q: qText,
-              options: [opt1, opt2, opt3, opt4],
-              answer: ansIdx
-            });
-          }
-        }
-        applyFetchedSheetData(fetchedQuestions, latestVideoUrl, latestThought);
-      } catch (e) {}
-    };
-
-    function syncFromGoogleSheetSilent() {
-      const oldScript = document.getElementById('google-sheet-jsonp');
-      if (oldScript) oldScript.remove();
-
-      const script = document.createElement('script');
-      script.id = 'google-sheet-jsonp';
-      script.src = `https://docs.google.com/spreadsheets/d/${SHEET_ID}/gviz/tq?tqx=out:json;responseHandler:handleSheetJsonp&_=${Date.now()}`;
-      document.body.appendChild(script);
-    }
-
-    updateAllProfileUI();
-    updateMalaUI();
-    renderQuizUI(false);
-    syncFromGoogleSheetSilent();
+    // आरंभिक लोड
+    updateAllStatsUI();
+    loadSheetData();
   </script>
 </body>
-</html>      
+</html>
