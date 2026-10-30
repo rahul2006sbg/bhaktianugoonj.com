@@ -29,7 +29,6 @@
     header h1 { margin: 0; font-size: 1.5rem; }
     header p { margin: 4px 0 0; font-size: 0.95rem; opacity: 0.95; }
 
-    /* Accessible Tab Navigation */
     nav[role="tablist"] {
       display: flex;
       flex-wrap: wrap;
@@ -110,7 +109,7 @@
       display: block;
       width: 100%;
       background: #f5f5f5;
-      color: #1a1a1a;
+      color: var(--text);
       border: 1px solid #ccc;
       padding: 12px 14px;
       border-radius: 8px;
@@ -124,7 +123,7 @@
     .badge {
       display: inline-block;
       background: #ffe082;
-      color: #bf360c;
+      color: var(--primary);
       padding: 4px 12px;
       border-radius: 12px;
       font-weight: bold;
@@ -144,6 +143,17 @@
       border-radius: 6px;
       margin-top: 10px;
       display: none;
+    }
+    .sr-only {
+      position: absolute;
+      width: 1px;
+      height: 1px;
+      padding: 0;
+      margin: -1px;
+      overflow: hidden;
+      clip: rect(0, 0, 0, 0);
+      white-space: nowrap;
+      border: 0;
     }
     audio {
       width: 100%;
@@ -169,7 +179,6 @@
     <p>ओरिजिनल डिवोशनल संगीत एवं सनातन साधना</p>
   </header>
 
-  <!-- Navigation Tabs -->
   <nav role="tablist" aria-label="मुख्य नेविगेशन टैब्स">
     <button role="tab" id="tab-btn-home" class="tab-btn" aria-selected="true" aria-controls="panel-home">1. होम</button>
     <button role="tab" id="tab-btn-jap" class="tab-btn" aria-selected="false" aria-controls="panel-jap">2. जप माला</button>
@@ -247,13 +256,14 @@
         <h2>सनातन धर्म क्विज़</h2>
         <p style="font-size:0.9rem; color:#555;">नियम: प्रत्येक प्रश्न के लिए <strong>30 सेकंड का समय</strong> मिलेगा। सही उत्तर पर +10 पॉइंट्स।</p>
         
-        <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:6px;">
+        <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:8px; flex-wrap:wrap; gap:6px;">
           <p id="quiz-progress" style="font-weight:bold; color:var(--primary); margin:0;">प्रश्न लोड हो रहा है...</p>
-          <p id="quiz-timer" style="font-weight:bold; color:#b71c1c; background:#ffebee; padding:4px 10px; border-radius:6px; margin:0;">समय: 30 सेक.</p>
+          <p id="quiz-timer" aria-live="off" style="font-weight:bold; color:#b71c1c; background:#ffebee; padding:4px 10px; border-radius:6px; margin:0;">समय: 30 सेक.</p>
         </div>
+        <div id="timer-sr-alert" class="sr-only" aria-live="assertive"></div>
 
         <div id="quiz-box">
-          <p id="quiz-question" tabindex="-1" style="font-weight:bold; font-size:1.15rem;">कृपया प्रतीक्षा करें...</p>
+          <p id="quiz-question" tabindex="-1" style="font-weight:bold; font-size:1.15rem;">दैनिक प्रश्न लोड हो रहे हैं, कृपया प्रतीक्षा करें...</p>
           <div id="quiz-options" role="group" aria-labelledby="quiz-question"></div>
         </div>
 
@@ -265,12 +275,22 @@
     <!-- TAB 4: DIRECT AUDIO PLAYER -->
     <section id="panel-audio" role="tabpanel" aria-labelledby="tab-btn-audio" class="tab-panel">
       <div class="card">
-        <h2>ऑडियो भजन प्लेयर (सीधे सुनें)</h2>
-        <p>यहाँ आप बिना ऐप से बाहर जाए सीधे भजन सुन सकते हैं और ऑफलाइन सुनने के लिए डाउनलोड भी कर सकते हैं।</p>
+        <h2>ऑडियो भजन प्लेयर</h2>
+        <p>यहाँ आप बिना ऐप से बाहर जाए सीधे भजन सुन सकते हैं और अपने फोन में डाउनलोड भी कर सकते हैं।</p>
 
         <div class="card" style="background:#fffdf9;">
-          <h3>1. राधा तो दीवानी कहलाई (ऑनलाइन प्लेयर)</h3>
-          <p>नीचे प्ले बटन दबाकर सीधे ऐप के अंदर सुनें:</p>
+          <h3>1. राधा तो दीवानी कहलाई (भक्ति अनुगूँज)</h3>
+          <audio controls preload="metadata" aria-label="राधा तो दीवानी कहलाई भजन प्लेयर">
+            <source src="radha-to-diwani-kahlai.mp3" type="audio/mpeg">
+            आपका ब्राउज़र ऑडियो प्लेयर सपोर्ट नहीं करता।
+          </audio>
+          <a href="radha-to-diwani-kahlai.mp3" download="Radha_To_Diwani_Kahlai_Bhakti_Anugoonj.mp3" class="btn-link secondary-btn" style="margin-top:12px;">
+            यह भजन फोन में डाउनलोड करें (MP3)
+          </a>
+        </div>
+
+        <div class="card" style="background:#fffdf9;">
+          <h3>2. Spotify ऑनलाइन प्लेयर</h3>
           <iframe 
             style="border-radius:12px; width:100%; height:152px; border:0;" 
             src="https://open.spotify.com/embed/track/2mEdL0SqQMNEjmYgqERJXU?utm_source=generator" 
@@ -278,18 +298,6 @@
             allow="autoplay; clipboard-write; encrypted-media; fullscreen; picture-in-picture" 
             loading="lazy">
           </iframe>
-        </div>
-
-        <div class="card" style="background:#fffdf9;">
-          <h3>2. डायरेक्ट MP3 प्लेयर एवं डाउनलोड</h3>
-          <p>यदि आपने फोल्डर में <code>radha-to-diwani-kahlai.mp3</code> फाइल रखी है, तो यह बिना इंटरनेट के भी यहाँ बजेगी:</p>
-          <audio controls preload="metadata" aria-label="राधा तो दीवानी कहलाई MP3 प्लेयर">
-            <source src="radha-to-diwani-kahlai.mp3" type="audio/mpeg">
-            आपका ब्राउज़र ऑडियो प्लेयर सपोर्ट नहीं करता।
-          </audio>
-          <a href="radha-to-diwani-kahlai.mp3" download="Radha_To_Diwani_Kahlai_Bhakti_Anugoonj.mp3" class="btn-link secondary-btn">
-            ऑडियो फाइल फोन में डाउनलोड करें (MP3)
-          </a>
         </div>
       </div>
     </section>
@@ -370,7 +378,7 @@
       </div>
 
       <div class="card">
-        <h2>उपाधि नियम तालिका (कठिन साधना मानदंड)</h2>
+        <h2>उपाधि नियम तालिका (सभी स्तर)</h2>
         <table>
           <thead>
             <tr>
@@ -379,10 +387,11 @@
             </tr>
           </thead>
           <tbody>
-            <tr><td><strong>जिज्ञासु</strong> (प्रारंभिक स्तर)</td><td>0 से 1,000 पॉइंट्स</td></tr>
-            <tr><td><strong>साधक</strong> (नियमित अभ्यास)</td><td>1,000 से 10,000 पॉइंट्स</td></tr>
-            <tr><td><strong>भक्त</strong> (गहरी निष्ठा - 1 लाख लक्ष्य)</td><td>10,000 से 1,00,000 पॉइंट्स</td></tr>
-            <tr><td><strong>धर्मरक्षक</strong> (सर्वोच्च सम्मान - 10 लाख लक्ष्य)</td><td>1,00,000 से 10,000,000+ पॉइंट्स</td></tr>
+            <tr><td><strong>जिज्ञासु</strong> (प्रारंभिक स्तर)</td><td>0 से 999 पॉइंट्स</td></tr>
+            <tr><td><strong>साधक</strong> (नियमित अभ्यास)</td><td>1,000 से 9,999 पॉइंट्स</td></tr>
+            <tr><td><strong>भक्त</strong> (गहरी निष्ठा)</td><td>10,000 से 99,999 पॉइंट्स</td></tr>
+            <tr><td><strong>परम भक्त</strong> (सिद्ध साधना - 1 लाख से 10 लाख तक)</td><td>1,00,000 से 9,99,999 पॉइंट्स</td></tr>
+            <tr><td><strong>धर्मरक्षक</strong> (सर्वोच्च सम्मान - 10 लाख लक्ष्य)</td><td>10,00,000+ पॉइंट्स</td></tr>
           </tbody>
         </table>
       </div>
@@ -406,26 +415,30 @@
       return d.getFullYear() + '-' + String(d.getMonth() + 1).padStart(2, '0') + '-' + String(d.getDate()).padStart(2, '0');
     }
 
-    // Tab Navigation Logic
+    let currentActiveTab = 'home';
     const tabMap = ['home', 'jap', 'quiz', 'audio', 'video', 'profile'];
+
     function switchTab(tabKey) {
+      currentActiveTab = tabKey;
       tabMap.forEach(k => {
         const btn = document.getElementById('tab-btn-' + k);
         const panel = document.getElementById('panel-' + k);
         if (k === tabKey) {
           btn.setAttribute('aria-selected', 'true');
           panel.classList.add('active');
-          if (k === 'quiz') {
-            resetQuizTimer();
-          } else {
-            stopQuizTimer();
-          }
         } else {
           btn.setAttribute('aria-selected', 'false');
           panel.classList.remove('active');
         }
       });
+
+      if (tabKey === 'quiz') {
+        renderQuizUI(true);
+      } else {
+        stopQuizTimer();
+      }
     }
+
     tabMap.forEach(k => {
       document.getElementById('tab-btn-' + k).addEventListener('click', () => switchTab(k));
     });
@@ -458,11 +471,12 @@
       setStore('ba_v4_today_malas', 0);
     }
 
+    // Complete 5-Tier Badge System (No gap between 1 Lakh and 10 Lakh)
     function getBadge(totalPts) {
       if (totalPts >= 1000000) return 'धर्मरक्षक';
-      if (totalPts >= 100000) return 'भक्त';
-      if (totalPts >= 10000) return 'साधक';
-      if (totalPts >= 1000) return 'जिज्ञासु (उत्तीर्ण)';
+      if (totalPts >= 100000) return 'परम भक्त';
+      if (totalPts >= 10000) return 'भक्त';
+      if (totalPts >= 1000) return 'साधक';
       return 'जिज्ञासु';
     }
 
@@ -530,7 +544,7 @@
       msg.textContent = `प्रोफाइल सेव हो गई! स्वागत है, ${userName} (${userCity})।`;
     });
 
-    // Certificate Download
+    // Official PNG Certificate Generator
     document.getElementById('download-certificate-btn').addEventListener('click', () => {
       const canvas = document.getElementById('cert-canvas');
       const ctx = canvas.getContext('2d');
@@ -728,45 +742,26 @@
       updateMalaUI();
     });
 
-    // Quiz Questions & 30-Second Timer Logic
-    let quizQuestions = [
-      { q: "1. भगवान श्रीराम के धनुष का क्या नाम था?", options: ["गांडीव", "कोदंड", "पिनाक", "शारंग"], answer: 1 },
-      { q: "2. श्रीमद्भगवद्गीता में कुल कितने अध्याय हैं?", options: ["12 अध्याय", "16 अध्याय", "18 अध्याय", "24 अध्याय"], answer: 2 },
-      { q: "3. गायत्री मंत्र किस वेद से लिया गया है?", options: ["ऋग्वेद", "यजुर्वेद", "सामवेद", "अथर्ववेद"], answer: 0 },
-      { q: "4. महाभारत में भीष्म पितामह के बचपन का क्या नाम था?", options: ["अभिमन्यु", "देवव्रत", "शांतनु", "विदुर"], answer: 1 },
-      { q: "5. भगवान शिव के धनुष का क्या नाम था?", options: ["पिनाक", "कोदंड", "गांडीव", "विजय"], answer: 0 },
-      { q: "6. रामायण के अनुसार लंका जाने के लिए समुद्र पर सेतु का निर्माण मुख्य रूप से किन वानर शिल्पियों ने किया था?", options: ["सुग्रीव और अंगद", "नल और नील", "जाम्बवन्त और केसरी", "सुषेण और दधिमुख"], answer: 1 },
-      { q: "7. 'सत्यमेव जयते' वाक्य किस उपनिषद से लिया गया है?", options: ["कठोपनिषद", "मुण्डकोपनिषद", "छान्दोग्य उपनिषद", "ईशावास्योपनिषद"], answer: 1 },
-      { q: "8. भगवान श्रीकृष्ण के शंख का क्या नाम था?", options: ["देवदत्त", "पाञ्चजन्य", "पौण्ड्र", "अनन्तविजय"], answer: 1 },
-      { q: "9. सनातन परंपरा में कुल कितने मुख्य पुराण माने गए हैं?", options: ["10 पुराण", "14 पुराण", "18 पुराण", "21 पुराण"], answer: 2 },
-      { q: "10. गोस्वामी तुलसीदास जी ने 'श्रीरामचरितमानस' की रचना मुख्य रूप से किस भाषा में की है?", options: ["ब्रजभाषा", "अवधी", "संस्कृत", "मैथिली"], answer: 1 },
-      { q: "11. भगवान विष्णु के वाहन का क्या नाम है?", options: ["नंदी", "गरुड़", "मूषक", "ऐरावत"], answer: 1 },
-      { q: "12. महाभारत के युद्ध में अर्जुन के सारथी कौन थे?", options: ["बलराम", "विदुर", "श्रीकृष्ण", "द्रोणाचार्य"], answer: 2 },
-      { q: "13. माता सीता के पिता का क्या नाम था?", options: ["राजा दशरथ", "राजा जनक", "महर्षि विश्वामित्र", "राजा अश्वपति"], answer: 1 },
-      { q: "14. चार वेदों में सबसे प्राचीन वेद कौन सा माना जाता है?", options: ["ऋग्वेद", "सामवेद", "यजुर्वेद", "अथर्ववेद"], answer: 0 },
-      { q: "15. हनुमान जी की माता का क्या नाम है?", options: ["सुमित्रा", "कौशल्या", "अंजनी", "देवकी"], answer: 2 },
-      { q: "16. द्वापर युग में भगवान श्रीकृष्ण का जन्म किस कारागार में हुआ था?", options: ["अयोध्या", "मथुरा", "द्वारका", "काशी"], answer: 1 },
-      { q: "17. महर्षि वेदव्यास ने किस महाकाव्य की रचना की थी?", options: ["रामायण", "महाभारत", "रघुवंशम्", "रामचरितमानस"], answer: 1 },
-      { q: "18. समुद्र मंथन से निकले हलाहल विष को किसने धारण किया था?", options: ["इंद्र देव", "भगवान विष्णु", "भगवान शिव", "ब्रह्मा जी"], answer: 2 },
-      { q: "19. केदारनाथ ज्योतिर्लिंग भारत के किस राज्य में स्थित है?", options: ["उत्तर प्रदेश", "गुजरात", "उत्तराखंड", "मध्य प्रदेश"], answer: 2 },
-      { q: "20. भगवान गणेश जी के वाहन का क्या नाम है?", options: ["सिंह", "मयूर", "मूषक", "हंस"], answer: 2 }
-    ];
-
-    let savedQuizDate = getStore('ba_v4_quiz_date', todayStr);
-    let currentQIndex = getMigratedInt('ba_v4_quiz_idx', 'ba_v3_quiz_idx', 'ba_v2_quiz_idx');
-    let quizCompleted = getStore('ba_v4_quiz_done', getStore('ba_v3_quiz_done', getStore('ba_v2_quiz_done', 'false'))) === 'true';
+    // Live Quiz Logic (Directly Powered by Google Sheet)
+    let quizQuestions = [];
+    let savedQuizDate = getStore('ba_v5_quiz_date', todayStr);
+    let currentQIndex = parseInt(getStore('ba_v5_quiz_idx', '0'), 10) || 0;
+    let quizCompleted = getStore('ba_v5_quiz_done', 'false') === 'true';
+    let savedSetSignature = getStore('ba_v5_quiz_sig', '');
+    let currentQuestionAnswered = false;
 
     if (savedQuizDate !== todayStr) {
       currentQIndex = 0;
       quizCompleted = false;
       savedQuizDate = todayStr;
-      setStore('ba_v4_quiz_date', todayStr);
-      setStore('ba_v4_quiz_idx', 0);
-      setStore('ba_v4_quiz_done', 'false');
+      setStore('ba_v5_quiz_date', todayStr);
+      setStore('ba_v5_quiz_idx', 0);
+      setStore('ba_v5_quiz_done', 'false');
     }
 
     const quizProgressEl = document.getElementById('quiz-progress');
     const quizTimerEl = document.getElementById('quiz-timer');
+    const timerSrAlertEl = document.getElementById('timer-sr-alert');
     const quizQuestionEl = document.getElementById('quiz-question');
     const quizOptionsEl = document.getElementById('quiz-options');
     const quizFeedbackEl = document.getElementById('quiz-feedback');
@@ -777,17 +772,22 @@
 
     function startQuizTimer() {
       stopQuizTimer();
+      if (currentActiveTab !== 'quiz' || quizCompleted || currentQuestionAnswered || quizQuestions.length === 0) {
+        return;
+      }
       timeLeft = 30;
       quizTimerEl.textContent = `समय: ${timeLeft} सेक.`;
       quizTimerEl.style.color = '#b71c1c';
       quizTimerEl.style.background = '#ffebee';
+      timerSrAlertEl.textContent = '';
 
       quizTimerInterval = setInterval(() => {
         timeLeft--;
         if (timeLeft > 0) {
           quizTimerEl.textContent = `समय: ${timeLeft} सेक.`;
-          if (timeLeft <= 10) {
+          if (timeLeft === 10) {
             quizTimerEl.style.background = '#ffcdd2';
+            timerSrAlertEl.textContent = '10 सेकंड शेष हैं।';
           }
         } else {
           stopQuizTimer();
@@ -804,13 +804,9 @@
       }
     }
 
-    function resetQuizTimer() {
-      if (!quizCompleted && currentQIndex < quizQuestions.length) {
-        startQuizTimer();
-      }
-    }
-
     function handleTimeOut() {
+      if (currentQuestionAnswered || quizQuestions.length === 0) return;
+      currentQuestionAnswered = true;
       const qObj = quizQuestions[currentQIndex];
       const allBtns = quizOptionsEl.querySelectorAll('button');
       allBtns.forEach(b => b.disabled = true);
@@ -830,31 +826,37 @@
       nextQuestionBtn.focus();
     }
 
-    function loadQuizQuestion() {
+    function renderQuizUI(shouldStartTimer) {
       stopQuizTimer();
-      if (currentQIndex >= quizQuestions.length) {
-        currentQIndex = 0;
-        quizCompleted = false;
-      }
 
-      if (quizCompleted && currentQIndex < quizQuestions.length) {
-        quizCompleted = false;
-        setStore('ba_v4_quiz_done', 'false');
-      }
-
-      if (quizCompleted || currentQIndex >= quizQuestions.length) {
-        quizProgressEl.textContent = `आज की क्विज़ पूर्ण (${quizQuestions.length} / ${quizQuestions.length})`;
-        quizTimerEl.textContent = 'पूर्ण';
-        quizQuestionEl.textContent = `बधाई ${userName} जी! आपने आज के सभी ${quizQuestions.length} प्रश्नों की क्विज़ पूरी कर ली है। आपके कुल क्विज़ पॉइंट्स: ${formatIndianNumber(quizPoints)} हैं। कल नए प्रश्नों के लिए पुनः पधारें!`;
+      if (quizQuestions.length === 0) {
+        quizProgressEl.textContent = 'दैनिक प्रश्न लोड हो रहे हैं...';
+        quizTimerEl.textContent = 'प्रतीक्षा करें';
+        quizQuestionEl.textContent = 'कृपया सुनिश्चित करें कि इंटरनेट चालू है। प्रश्न लोड हो रहे हैं...';
         quizOptionsEl.innerHTML = '';
         quizFeedbackEl.style.display = 'none';
         nextQuestionBtn.style.display = 'none';
         return;
       }
 
+      if (quizCompleted || currentQIndex >= quizQuestions.length) {
+        quizCompleted = true;
+        setStore('ba_v5_quiz_done', 'true');
+        quizProgressEl.textContent = `आज की क्विज़ पूर्ण (${quizQuestions.length} / ${quizQuestions.length})`;
+        quizTimerEl.textContent = 'पूर्ण';
+        quizQuestionEl.textContent = `बधाई ${userName} जी! आपने आज के सभी ${quizQuestions.length} प्रश्नों की क्विज़ पूरी कर ली है। आपके कुल क्विज़ पॉइंट्स: ${formatIndianNumber(quizPoints)} हैं। कल नए प्रश्नों के लिए पुनः पधारें या जप माला से अनलिमिटेड पॉइंट्स अर्जित करें!`;
+        quizOptionsEl.innerHTML = '';
+        quizFeedbackEl.style.display = 'none';
+        nextQuestionBtn.style.display = 'none';
+        return;
+      }
+
+      currentQuestionAnswered = false;
       const qObj = quizQuestions[currentQIndex];
+      const cleanQuestionText = qObj.q.replace(/^\d+[\.\)\-\s]+/, '').trim();
+
       quizProgressEl.textContent = `प्रश्न ${currentQIndex + 1} / ${quizQuestions.length} (कुल क्विज़ पॉइंट्स: ${formatIndianNumber(quizPoints)})`;
-      quizQuestionEl.textContent = qObj.q;
+      quizQuestionEl.textContent = `प्रश्न ${currentQIndex + 1}: ${cleanQuestionText}`;
       quizOptionsEl.innerHTML = '';
       quizFeedbackEl.style.display = 'none';
       quizFeedbackEl.textContent = '';
@@ -869,11 +871,18 @@
         quizOptionsEl.appendChild(btn);
       });
 
-      startQuizTimer();
+      if (shouldStartTimer && currentActiveTab === 'quiz') {
+        startQuizTimer();
+      } else {
+        quizTimerEl.textContent = 'समय: 30 सेक.';
+      }
     }
 
     function handleAnswer(selectedIndex, clickedBtn) {
+      if (currentQuestionAnswered) return;
+      currentQuestionAnswered = true;
       stopQuizTimer();
+
       const qObj = quizQuestions[currentQIndex];
       const allBtns = quizOptionsEl.querySelectorAll('button');
       allBtns.forEach(b => b.disabled = true);
@@ -912,15 +921,40 @@
       currentQIndex++;
       if (currentQIndex >= quizQuestions.length) {
         quizCompleted = true;
-        setStore('ba_v4_quiz_done', 'true');
+        setStore('ba_v5_quiz_done', 'true');
       }
-      setStore('ba_v4_quiz_idx', currentQIndex);
-      loadQuizQuestion();
+      setStore('ba_v5_quiz_idx', currentQIndex);
+      renderQuizUI(true);
       quizQuestionEl.focus();
     });
 
-    // Background Silent Sync from Google Sheet
+    // Live Google Sheet Data Processing
     const SHEET_ID = '1ZNn71F4f4Wyk1lxpnLLkT89bBXGm0uN_FaTGOBloNPY';
+
+    function applyFetchedSheetData(fetchedQuestions, latestVideoUrl, latestThought) {
+      if (latestVideoUrl) {
+        document.getElementById('home-youtube-link').href = latestVideoUrl;
+        document.getElementById('video-tab-youtube-link').href = latestVideoUrl;
+      }
+      if (latestThought) {
+        document.getElementById('home-thought-text').textContent = latestThought;
+      }
+      if (fetchedQuestions.length > 0) {
+        const newSig = fetchedQuestions.length + ':' + fetchedQuestions[0].q + ':' + fetchedQuestions[fetchedQuestions.length - 1].q;
+        if (savedSetSignature !== newSig) {
+          savedSetSignature = newSig;
+          currentQIndex = 0;
+          quizCompleted = false;
+          setStore('ba_v5_quiz_sig', newSig);
+          setStore('ba_v5_quiz_idx', 0);
+          setStore('ba_v5_quiz_done', 'false');
+        }
+        quizQuestions = fetchedQuestions;
+        if (!currentQuestionAnswered) {
+          renderQuizUI(currentActiveTab === 'quiz');
+        }
+      }
+    }
 
     window.handleSheetJsonp = function(response) {
       try {
@@ -946,12 +980,8 @@
 
           if (qText.toLowerCase() === 'question' || qText === 'प्रश्न') continue;
 
-          if (ytLink && ytLink.startsWith('http') && !latestVideoUrl) {
-            latestVideoUrl = ytLink;
-          }
-          if (thoughtText && !latestThought) {
-            latestThought = thoughtText;
-          }
+          if (ytLink && ytLink.startsWith('http') && !latestVideoUrl) latestVideoUrl = ytLink;
+          if (thoughtText && !latestThought) latestThought = thoughtText;
 
           if (qText && opt1 && opt2 && opt3 && opt4) {
             let ansIdx = parseInt(ansRaw, 10);
@@ -963,22 +993,7 @@
             });
           }
         }
-
-        if (latestVideoUrl) {
-          document.getElementById('home-youtube-link').href = latestVideoUrl;
-          document.getElementById('video-tab-youtube-link').href = latestVideoUrl;
-        }
-
-        if (latestThought) {
-          document.getElementById('home-thought-text').textContent = latestThought;
-        }
-
-        if (fetchedQuestions.length > 0) {
-          quizQuestions = fetchedQuestions;
-          if (nextQuestionBtn.style.display === 'none') {
-            loadQuizQuestion();
-          }
-        }
+        applyFetchedSheetData(fetchedQuestions, latestVideoUrl, latestThought);
       } catch (e) {}
     };
 
@@ -992,11 +1007,10 @@
       document.body.appendChild(script);
     }
 
-    // Startup Init
     updateAllProfileUI();
     updateMalaUI();
-    loadQuizQuestion();
+    renderQuizUI(false);
     syncFromGoogleSheetSilent();
   </script>
 </body>
-</html>
+</html>      
