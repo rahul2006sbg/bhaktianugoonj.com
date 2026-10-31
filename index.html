@@ -532,7 +532,7 @@
       return d.getFullYear() + '-' + String(d.getMonth() + 1).padStart(2, '0') + '-' + String(d.getDate()).padStart(2, '0');
     }
 
-    const DAILY_QUIZ_LIMIT = 10; // प्रतिदिन अधिकतम 10 प्रश्नों की सख्त सीमा
+    const DAILY_QUIZ_LIMIT = 10;
     let currentActiveTab = 'home';
     let sheetLoadComplete = false;
     const tabMap = ['home', 'jap', 'quiz', 'audio', 'video', 'profile'];
@@ -590,7 +590,6 @@
 
     const todayStr = getTodayDateString();
 
-    // दैनिक माला काउंटर रीसेट (तारीख बदलने पर)
     let savedMalaDate = getStore('ba_v4_mala_date', todayStr);
     let todayMalas = parseInt(getStore('ba_v4_today_malas', '0'), 10) || 0;
     if (savedMalaDate !== todayStr) {
@@ -599,7 +598,6 @@
       setStore('ba_v4_today_malas', 0);
     }
 
-    // दैनिक 10 प्रश्न काउंटर (तारीख बदलने पर आज की गिनती 0 होगी, पर पुराने प्रश्न लॉक ही रहेंगे)
     let savedQuizDate = getStore('ba_v4_quiz_date', todayStr);
     let todayQuizCount = parseInt(getStore('ba_v4_quiz_today_cnt', '0'), 10) || 0;
     if (savedQuizDate !== todayStr) {
@@ -619,7 +617,6 @@
       }
     }
 
-    // पहले खेले जा चुके प्रश्नों की स्थायी मेमोरी
     let answeredQuestions = [];
     try {
       answeredQuestions = JSON.parse(getStore('ba_v4_answered_qs', '[]'));
@@ -628,6 +625,25 @@
       answeredQuestions = [];
     }
     let minAnsweredCount = parseInt(getStore('ba_v4_min_ans_cnt', '0'), 10) || 0;
+
+    // पिछले बग की वजह से यदि 30वां प्रश्न (काशी विश्वनाथ) गलत लॉक हो गया था, तो उसे अनलॉक करें ताकि यूज़र दोबारा खेल सके
+    (function fixWronglyLockedKashiQuestion() {
+      if (getStore('ba_v4_kashi_bug_fixed_v2', 'false') === 'true') return;
+      const beforeLen = answeredQuestions.length;
+      answeredQuestions = answeredQuestions.filter(q => !String(q).includes('काशी विश्वनाथ'));
+      if (answeredQuestions.length < beforeLen) {
+        setStore('ba_v4_answered_qs', JSON.stringify(answeredQuestions));
+        if (todayQuizCount > 0) {
+          todayQuizCount--;
+          setStore('ba_v4_quiz_today_cnt', todayQuizCount);
+        }
+        if (minAnsweredCount >= 30) {
+          minAnsweredCount = 29;
+          setStore('ba_v4_min_ans_cnt', minAnsweredCount);
+        }
+      }
+      setStore('ba_v4_kashi_bug_fixed_v2', 'true');
+    })();
 
     function getBadgeTitle(pts) {
       if (pts >= 1000000) return 'धर्मरक्षक';
@@ -656,7 +672,6 @@
       return 'BA-' + computeChecksum(raw).slice(0, 6);
     }
 
-    // --- 3. टेम्पर-प्रूफ साधना रिकवरी कोड जनरेटर एवं वेरिफायर ---
     function generateRecoveryKey() {
       const playedCount = Math.max(answeredQuestions.length, minAnsweredCount);
       const payloadObj = {
@@ -735,7 +750,6 @@
       applyProfileLockUI();
     }
 
-    // --- JAP MALA LOGIC ---
     const mantraSelect = document.getElementById('mantra-select');
     const customMantraBox = document.getElementById('custom-mantra-box');
     const customMantraInput = document.getElementById('custom-mantra-input');
@@ -798,7 +812,6 @@
       updateAllStatsUI();
     });
 
-    // --- PROFILE & RECOVERY LOGIC ---
     document.getElementById('profile-name-input').value = userName !== 'साधक' ? userName : '';
     document.getElementById('profile-city-input').value = userCity !== 'काशी' ? userCity : '';
 
@@ -917,7 +930,6 @@
         malaCount = Math.max(malaCount, parseInt(data.mc, 10) || 0);
         minAnsweredCount = Math.max(minAnsweredCount, parseInt(data.ac, 10) || 0);
 
-        // यदि रिकवरी कोड आज ही का है, तो आज खेले गए प्रश्नों की गिनती भी सुरक्षित रूप से सिंक करें
         const nowStr = getTodayDateString();
         if (data.qd === nowStr) {
           todayQuizCount = Math.max(todayQuizCount, parseInt(data.qt, 10) || 0);
@@ -947,7 +959,6 @@
       }
     });
 
-    // --- CERTIFICATE DOWNLOAD LOGIC ---
     document.getElementById('download-certificate-btn').addEventListener('click', () => {
       const canvas = document.getElementById('cert-canvas');
       const ctx = canvas.getContext('2d');
@@ -1016,7 +1027,6 @@
       }
     });
 
-    // --- DHARMA QUIZ & GOOGLE SHEET SYNC (DAILY 10 LIMIT + PERMANENT QUESTION TRACKER + DYNAMIC AUDIO) ---
     const SHEET_ID = '1ZNn71F4f4Wyk1lxpnLLkT89bBXGm0uN_FaTGOBloNPY';
     const SHEET_CSV_URL = `https://docs.google.com/spreadsheets/d/${SHEET_ID}/export?format=csv`;
 
@@ -1046,7 +1056,6 @@
         setStore('ba_v4_min_ans_cnt', minAnsweredCount);
       }
 
-      // आज खेले गए प्रश्नों की गिनती +1 बढ़ाएं
       todayQuizCount++;
       setStore('ba_v4_quiz_date', savedQuizDate);
       setStore('ba_v4_quiz_today_cnt', todayQuizCount);
@@ -1070,6 +1079,9 @@
       const limit = Math.min(targetCount, quizData.length);
       for (let i = 0; i < limit; i++) {
         const qKey = String(quizData[i].q || '').trim();
+        if (i === 29 && qKey.includes('काशी विश्वनाथ') && getStore('ba_v4_kashi_replayed_v2', 'false') !== 'true') {
+          continue;
+        }
         if (qKey && !answeredQuestions.includes(qKey)) {
           answeredQuestions.push(qKey);
         }
@@ -1108,7 +1120,10 @@
           } else if (ch === ',') {
             row.push(cur.trim());
             cur = '';
-          } else if (ch === '\n' || ch === '\r') {
+          } else if (ch === '\r' || ch === '\n') {
+            if (ch === '\r' && text[i + 1] === '\n') {
+              i++;
+            }
             if (cur !== '' || row.length > 0) {
               row.push(cur.trim());
               rows.push(row);
@@ -1125,6 +1140,31 @@
         rows.push(row);
       }
       return rows;
+    }
+
+    // Google Sheet संरचना:
+    // कॉलम A (r[0]) = प्रश्न
+    // कॉलम B (r[1]) = विकल्प 0 (पहला विकल्प)
+    // कॉलम C (r[2]) = विकल्प 1 (दूसरा विकल्प)
+    // कॉलम D (r[3]) = विकल्प 2 (तीसरा विकल्प)
+    // कॉलम E (r[4]) = विकल्प 3 (चौथा विकल्प)
+    // कॉलम F (r[5]) = सही उत्तर (0, 1, 2, या 3)
+    function resolveCorrectAnswerIndex(colFValue, optionsFromBtoE) {
+      const raw = String(colFValue !== undefined && colFValue !== null ? colFValue : '').trim();
+
+      // सीधे 0, 1, 2, 3 की जाँच (बिना किसी A/B कन्फ्यूजन के)
+      const n = parseInt(raw, 10);
+      if (!isNaN(n) && n >= 0 && n <= 3) {
+        return n;
+      }
+
+      // यदि कभी कॉलम F में नंबर की जगह विकल्प का पूरा टेक्स्ट लिखा हो
+      const textMatch = optionsFromBtoE.findIndex(opt => String(opt).trim() === raw);
+      if (textMatch !== -1) {
+        return textMatch;
+      }
+
+      return 0;
     }
 
     function resolveAudioUrl(fileStr) {
@@ -1186,20 +1226,14 @@
 
           for (let i = 1; i < rows.length; i++) {
             const r = rows[i];
+            // r[0]=कॉलम A (प्रश्न), r[1..4]=कॉलम B से E (विकल्प), r[5]=कॉलम F (सही उत्तर: 0, 1, 2, 3)
             if (r[0] && r[1] && r[2] && r[3] && r[4]) {
-              let ansIdx = 0;
-              const rawAns = String(r[5] || '').trim().toUpperCase();
-              if (rawAns === 'A' || rawAns === '1') ansIdx = 0;
-              else if (rawAns === 'B' || rawAns === '2') ansIdx = 1;
-              else if (rawAns === 'C' || rawAns === '3') ansIdx = 2;
-              else if (rawAns === 'D' || rawAns === '4') ansIdx = 3;
-              else if (!isNaN(parseInt(rawAns, 10))) {
-                const n = parseInt(rawAns, 10);
-                ansIdx = (n >= 1 && n <= 4) ? n - 1 : n;
-              }
+              const optsFromBtoE = [r[1], r[2], r[3], r[4]];
+              const ansIdx = resolveCorrectAnswerIndex(r[5], optsFromBtoE);
+
               parsedQuestions.push({
                 q: r[0],
-                opts: [r[1], r[2], r[3], r[4]],
+                opts: optsFromBtoE,
                 ans: ansIdx
               });
             }
@@ -1289,6 +1323,9 @@
       quizLocked = true;
       const qObj = quizData[currentQIndex];
 
+      if (qObj.q.includes('काशी विश्वनाथ')) {
+        setStore('ba_v4_kashi_replayed_v2', 'true');
+      }
       recordQuestionAttempt(qObj.q);
       setStore('ba_v4_quiz_idx', currentQIndex + 1);
 
@@ -1320,7 +1357,6 @@
 
       currentQIndex = findFirstUnansweredIndex();
 
-      // 1. यदि शीट के सारे प्रश्न समाप्त हो चुके हैं
       if (currentQIndex >= quizData.length) {
         progEl.textContent = `सभी ${quizData.length} उपलब्ध प्रश्न पूर्ण!`;
         timerEl.textContent = 'पूर्ण';
@@ -1331,7 +1367,6 @@
         return;
       }
 
-      // 2. यदि आज के 10 प्रश्नों की दैनिक सीमा पूरी हो चुकी है
       if (todayQuizCount >= DAILY_QUIZ_LIMIT) {
         progEl.textContent = `आज का लक्ष्य पूर्ण (${DAILY_QUIZ_LIMIT} / ${DAILY_QUIZ_LIMIT} प्रश्न)`;
         timerEl.textContent = 'कल खुलेंगे';
@@ -1342,7 +1377,6 @@
         return;
       }
 
-      // 3. अगला नया प्रश्न दिखाएं (आज के 10 की सीमा के भीतर)
       quizLocked = false;
       const qObj = quizData[currentQIndex];
       progEl.textContent = `आज का प्रश्न: ${todayQuizCount + 1} / ${DAILY_QUIZ_LIMIT} (कुल: ${currentQIndex + 1} / ${quizData.length})`;
@@ -1371,6 +1405,10 @@
       stopQuizTimer();
 
       const qObj = quizData[currentQIndex];
+      if (qObj.q.includes('काशी विश्वनाथ')) {
+        setStore('ba_v4_kashi_replayed_v2', 'true');
+      }
+
       const allBtns = document.querySelectorAll('#quiz-options .option-btn');
       allBtns.forEach(b => b.disabled = true);
 
@@ -1394,7 +1432,6 @@
         fb.textContent = `गलत उत्तर! सही उत्तर है: "${qObj.opts[qObj.ans]}"`;
       }
 
-      // प्रश्न को स्थायी रूप से लॉक करें और आज की गिनती (1 से 10) बढ़ाएं
       recordQuestionAttempt(qObj.q);
       setStore('ba_v4_quiz_idx', currentQIndex + 1);
 
@@ -1408,7 +1445,6 @@
       document.getElementById('quiz-question').focus();
     });
 
-    // आरंभिक लोड
     updateAllStatsUI();
     loadSheetData();
   </script>
