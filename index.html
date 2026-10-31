@@ -126,6 +126,38 @@
     .amazon-btn { background: #00a8e1; color: #000000; }
     .insta-btn { background: #c13584; color: #ffffff; }
 
+    /* ऑडियो रिवाइंड, फास्ट-फॉरवर्ड, नेक्स्ट और प्रीवियस कंट्रोल्स */
+    .audio-seek-group {
+      display: flex;
+      gap: 10px;
+      margin-top: 8px;
+    }
+    .seek-btn {
+      flex: 1;
+      background: #fbe9e7;
+      color: var(--primary);
+      border: 1px solid var(--primary);
+      padding: 10px 8px;
+      border-radius: 6px;
+      font-size: 0.95rem;
+      font-weight: bold;
+      cursor: pointer;
+      touch-action: manipulation;
+    }
+    .seek-btn:active {
+      background: var(--primary);
+      color: #ffffff;
+    }
+    .nav-track-btn {
+      background: #fff3e0;
+      color: #e65100;
+      border-color: #e65100;
+    }
+    .nav-track-btn:active {
+      background: #e65100;
+      color: #ffffff;
+    }
+
     .option-btn {
       display: block;
       width: 100%;
@@ -159,6 +191,16 @@
       padding: 4px 12px;
       border-radius: 12px;
       font-weight: bold;
+    }
+    .new-tag {
+      display: inline-block;
+      background: #d32f2f;
+      color: #ffffff;
+      font-size: 0.8rem;
+      padding: 2px 8px;
+      border-radius: 10px;
+      margin-left: 6px;
+      vertical-align: middle;
     }
     select, input[type="text"] {
       width: 100%;
@@ -240,11 +282,12 @@
         <p>आज का सुविचार: <em id="home-thought-text">"श्रद्धावान् लभते ज्ञानम्" — श्रद्धा रखने वाले मनुष्य को ही परम ज्ञान की प्राप्ति होती है।</em></p>
       </div>
 
+      <!-- होम टैब पर ऑटो-अपडेट होने वाला लेटेस्ट भजन का नाम और ऑडियो टैब पर ले जाने वाला बटन -->
       <div class="card">
         <h2>लेटेस्ट फीचर्ड भजन एवं वीडियो</h2>
-        <h3>राधा तो दीवानी कहलाई - भक्ति अनुगूँज</h3>
+        <h3 id="home-featured-title">राधा तो दीवानी कहलाई - भक्ति अनुगूँज <span class="new-tag">नवीनतम भजन</span></h3>
         <p>हमारा नवीनतम ओरिजिनल भजन सीधे सुनें या नीचे दिए गए विकल्पों से अपनी साधना शुरू करें:</p>
-        <button type="button" class="action-btn" onclick="switchTab('audio')">ऐप के अंदर ऑडियो भजन सुनें</button>
+        <button id="home-listen-btn" type="button" class="action-btn" onclick="switchTab('audio')">ऐप के अंदर ऑडियो भजन सुनें</button>
         <a id="home-youtube-link" href="https://youtu.be/kqqri2IP6mU" target="_blank" rel="noopener noreferrer" class="btn-link secondary-btn">
           लेटेस्ट वीडियो YouTube पर देखें
         </a>
@@ -318,22 +361,29 @@
     <section id="panel-audio" role="tabpanel" aria-labelledby="tab-btn-audio" class="tab-panel">
       <div class="card">
         <h2>ऑडियो भजन प्लेयर</h2>
-        <p>यहाँ आप बिना ऐप से बाहर जाए सीधे भजन सुन सकते हैं और अपने फोन में डाउनलोड भी कर सकते हैं।</p>
+        <p>यहाँ सबसे नए भजन सबसे ऊपर (नंबर 1 पर) दिखाई देते हैं। आप भजन को 10 सेकंड आगे-पीछे (Fast-Forward / Rewind) कर सकते हैं, अगला या पिछला भजन (Next / Previous) चला सकते हैं और फोन में डाउनलोड भी कर सकते हैं।</p>
 
-        <!-- पहला मुख्य भजन (हमेशा उपलब्ध) -->
-        <div class="card" style="background:#fffdf9;">
-          <h3>1. राधा तो दीवानी कहलाई (भक्ति अनुगूँज)</h3>
-          <audio controls preload="metadata" aria-label="राधा तो दीवानी कहलाई भजन प्लेयर">
-            <source src="radha-to-diwani-kahlai.mp3" type="audio/mpeg">
-            आपका ब्राउज़र ऑडियो प्लेयर सपोर्ट नहीं करता।
-          </audio>
-          <a href="radha-to-diwani-kahlai.mp3" download="Radha_To_Diwani_Kahlai_Bhakti_Anugoonj.mp3" class="btn-link secondary-btn" style="margin-top:12px;">
-            यह भजन फोन में डाउनलोड करें (MP3)
-          </a>
+        <!-- स्क्रीन रीडर के लिए फॉरवर्ड/रिवाइंड और नेक्स्ट/प्रीवियस स्टेटस अलर्ट -->
+        <div id="audio-seek-sr-alert" class="sr-only" aria-live="polite"></div>
+
+        <!-- सभी भजन (नए भजन सबसे ऊपर और डिफ़ॉल्ट भजन) यहाँ क्रम से दिखेंगे -->
+        <div id="all-audio-container">
+          <div class="card" style="background:#fffdf9;">
+            <h3>1. राधा तो दीवानी कहलाई (भक्ति अनुगूँज)</h3>
+            <audio id="bhajan-audio-player-0" data-track-index="0" controls preload="metadata" aria-label="राधा तो दीवानी कहलाई भजन प्लेयर" src="radha-to-diwani-kahlai.mp3"></audio>
+            <div class="audio-seek-group" role="group" aria-label="राधा तो दीवानी कहलाई फॉरवर्ड और रिवाइंड कंट्रोल">
+              <button type="button" class="seek-btn" onclick="seekAudio('bhajan-audio-player-0', -10, 'राधा तो दीवानी कहलाई')" aria-label="राधा तो दीवानी कहलाई 10 सेकंड पीछे करें (Rewind)">⏪ 10 सेक. पीछे</button>
+              <button type="button" class="seek-btn" onclick="seekAudio('bhajan-audio-player-0', 10, 'राधा तो दीवानी कहलाई')" aria-label="राधा तो दीवानी कहलाई 10 सेकंड आगे करें (Fast Forward)">10 सेक. आगे ⏩</button>
+            </div>
+            <div class="audio-seek-group" role="group" aria-label="राधा तो दीवानी कहलाई पिछला और अगला भजन कंट्रोल">
+              <button type="button" class="seek-btn nav-track-btn" onclick="playAdjacentTrack(0, -1)" aria-label="पिछला भजन चलाएं (Previous Track)">⏮️ पिछला भजन</button>
+              <button type="button" class="seek-btn nav-track-btn" onclick="playAdjacentTrack(0, 1)" aria-label="अगला भजन चलाएं (Next Track)">अगला भजन ⏭️</button>
+            </div>
+            <a href="radha-to-diwani-kahlai.mp3" download="Radha_To_Diwani_Kahlai_Bhakti_Anugoonj.mp3" class="btn-link secondary-btn" style="margin-top:12px;">
+              यह भजन फोन में डाउनलोड करें (MP3)
+            </a>
+          </div>
         </div>
-
-        <!-- Google Sheet (कॉलम I और कॉलम J) से आने वाले नए ऑडियो भजन यहाँ अपने आप जुड़ेंगे -->
-        <div id="dynamic-audio-list"></div>
 
         <div class="card" style="background:#fffdf9;">
           <h3>Spotify ऑनलाइन प्लेयर</h3>
@@ -511,15 +561,103 @@
       checkNext(0);
     })();
 
-    // --- 2. एक समय पर एक ही ऑडियो भजन बजे (Auto-Pause Other Audios) ---
+    // --- 2. ऑडियो प्लेयर: ऑटो-पॉज़ + Rewind/Fast-Forward (10s) + Previous/Next Track + ऑटो-नेक्स्ट ---
+    let currentPlayingAudio = null;
+    let currentTrackList = [
+      { title: 'राधा तो दीवानी कहलाई', file: 'radha-to-diwani-kahlai.mp3' }
+    ];
+
+    function formatTimeMinSec(seconds) {
+      const s = Math.max(0, Math.floor(seconds || 0));
+      const mins = Math.floor(s / 60);
+      const secs = s % 60;
+      return `${mins} मिनट ${secs} सेकंड`;
+    }
+
+    function seekAudio(audioId, deltaSeconds, trackTitle) {
+      const audioEl = document.getElementById(audioId);
+      if (!audioEl) return;
+
+      const duration = isNaN(audioEl.duration) ? Infinity : audioEl.duration;
+      const nextTime = Math.min(Math.max(0, (audioEl.currentTime || 0) + deltaSeconds), duration);
+      audioEl.currentTime = nextTime;
+
+      const srAlert = document.getElementById('audio-seek-sr-alert');
+      if (srAlert) {
+        const actionWord = deltaSeconds > 0 ? '10 सेकंड आगे बढ़ाया गया' : '10 सेकंड पीछे किया गया';
+        srAlert.textContent = `${trackTitle}: ${actionWord}। वर्तमान समय ${formatTimeMinSec(nextTime)}`;
+      }
+    }
+
+    function playAdjacentTrack(currentIndex, direction) {
+      const total = currentTrackList.length;
+      if (total === 0) return;
+
+      // यदि 1 ही भजन हो तो उसे ही शुरू से चला दें, अन्यथा अगले/पिछले भजन पर जाएं
+      const targetIndex = (currentIndex + direction + total) % total;
+      const targetAudio = document.getElementById(`bhajan-audio-player-${targetIndex}`);
+      if (!targetAudio) return;
+
+      const allAudios = document.querySelectorAll('audio');
+      allAudios.forEach(function(aud) {
+        if (aud !== targetAudio) {
+          aud.pause();
+        }
+      });
+
+      targetAudio.currentTime = 0;
+      targetAudio.play().catch(function() {});
+      targetAudio.focus();
+
+      const srAlert = document.getElementById('audio-seek-sr-alert');
+      if (srAlert && currentTrackList[targetIndex]) {
+        const dirText = direction > 0 ? 'अगला भजन' : 'पिछला भजन';
+        srAlert.textContent = `${dirText} चालू किया गया: ${currentTrackList[targetIndex].title}`;
+      }
+    }
+
     document.addEventListener('play', function(e) {
       if (e.target && e.target.tagName === 'AUDIO') {
+        currentPlayingAudio = e.target;
+        const activeIdx = parseInt(e.target.getAttribute('data-track-index') || '0', 10) || 0;
+
         const allAudios = document.querySelectorAll('audio');
         allAudios.forEach(function(aud) {
           if (aud !== e.target) {
             aud.pause();
           }
         });
+
+        // फोन के नोटिफिकेशन बार (MediaSession) में Fast-Forward, Rewind, Previous और Next बटन सक्रिय करें
+        if ('mediaSession' in navigator) {
+          try {
+            const titleAttr = e.target.getAttribute('aria-label') || 'भक्ति अनुगूँज भजन';
+            navigator.mediaSession.metadata = new MediaMetadata({
+              title: titleAttr.replace(' भजन प्लेयर', ''),
+              artist: 'भक्ति अनुगूँज',
+              album: 'सनातन साधना श्रृंखला'
+            });
+            navigator.mediaSession.setActionHandler('seekbackward', function(details) {
+              const skipTime = details.seekOffset || 10;
+              if (currentPlayingAudio) {
+                currentPlayingAudio.currentTime = Math.max((currentPlayingAudio.currentTime || 0) - skipTime, 0);
+              }
+            });
+            navigator.mediaSession.setActionHandler('seekforward', function(details) {
+              const skipTime = details.seekOffset || 10;
+              if (currentPlayingAudio) {
+                const dur = isNaN(currentPlayingAudio.duration) ? Infinity : currentPlayingAudio.duration;
+                currentPlayingAudio.currentTime = Math.min((currentPlayingAudio.currentTime || 0) + skipTime, dur);
+              }
+            });
+            navigator.mediaSession.setActionHandler('previoustrack', function() {
+              playAdjacentTrack(activeIdx, -1);
+            });
+            navigator.mediaSession.setActionHandler('nexttrack', function() {
+              playAdjacentTrack(activeIdx, 1);
+            });
+          } catch (err) {}
+        }
       }
     }, true);
 
@@ -632,7 +770,6 @@
     }
     let minAnsweredCount = parseInt(getStore('ba_v4_min_ans_cnt', '0'), 10) || 0;
 
-    // यदि 30वां प्रश्न (काशी विश्वनाथ) पहले के बग की वजह से गलत लॉक हो गया था, तो उसे एक बार अनलॉक करें
     (function fixWronglyLockedKashiQuestion() {
       if (getStore('ba_v4_kashi_bug_fixed_v3', 'false') === 'true') return;
       const beforeLen = answeredQuestions.length;
@@ -997,9 +1134,7 @@
           ctx.lineWidth = 3;
           ctx.strokeStyle = '#ff8f00';
           ctx.stroke();
-        } catch (e) {
-          // यदि लोगो ड्रा करने में कोई त्रुटि हो तो टेक्स्ट जारी रखें
-        }
+        } catch (e) {}
       }
 
       ctx.fillStyle = '#bf360c';
@@ -1050,7 +1185,6 @@
         dMsg.style.display = 'block';
         dMsg.textContent = 'आपका आधिकारिक प्रमाण-पत्र (PNG Image) सफलतापूर्वक डाउनलोड हो रहा है!';
       } catch (err) {
-        // यदि लोकल फाइल सुरक्षा (CORS) के कारण इमेज एक्सपोर्ट रुके, तो बिना इमेज रुकावट के तुरंत डाउनलोड करें
         drawCertificateBaseAndText(ctx, canvas, totalPts, badge, verifyId, null);
         try {
           const fallbackUrl = canvas.toDataURL('image/png');
@@ -1211,13 +1345,10 @@
       return rows;
     }
 
-    // Google Sheet नियम:
+    // Google Sheet संरचना:
     // कॉलम A (r[0]) = प्रश्न
-    // कॉलम B (r[1]) = विकल्प 0 (पहला विकल्प)
-    // कॉलम C (r[2]) = विकल्प 1 (दूसरा विकल्प)
-    // कॉलम D (r[3]) = विकल्प 2 (तीसरा विकल्प)
-    // कॉलम E (r[4]) = विकल्प 3 (चौथा विकल्प)
-    // कॉलम F (r[5]) = सही उत्तर (0, 1, 2, या 3)
+    // कॉलम B से E (r[1..4]) = विकल्प 0, 1, 2, 3
+    // कॉलम F (r[5]) = सही उत्तर नंबर (0, 1, 2, या 3)
     function resolveCorrectAnswerIndex(colFValue, optionsFromBtoE) {
       const raw = String(colFValue !== undefined && colFValue !== null ? colFValue : '').trim();
       const n = parseInt(raw, 10);
@@ -1239,31 +1370,115 @@
       return encodeURI(clean);
     }
 
-    function renderDynamicAudios(audioItems) {
-      const container = document.getElementById('dynamic-audio-list');
+    // --- होम टैब (केवल टाइटल व बटन) और ऑडियो टैब (Rewind, Fast-Forward, Previous और Next बटनों के साथ) अपडेट करने का फंक्शन ---
+    function updateFeaturedAndAudioList(extraAudiosFromSheet) {
+      const defaultTrack = {
+        title: 'राधा तो दीवानी कहलाई',
+        file: 'radha-to-diwani-kahlai.mp3'
+      };
+
+      // शीट में सबसे नीचे जोड़ा गया नया भजन सबसे ऊपर (नंबर 1 पर) रखें
+      const reversedNewTracks = extraAudiosFromSheet.slice().reverse();
+      const allTracks = reversedNewTracks.concat([defaultTrack]);
+      currentTrackList = allTracks;
+
+      // 1. होम टैब पर केवल नवीनतम भजन का टाइटल और बटन अपडेट करें (कोई ऑडियो प्लेयर नहीं)
+      const latestTrack = allTracks[0];
+      const homeTitleEl = document.getElementById('home-featured-title');
+      if (homeTitleEl) {
+        homeTitleEl.innerHTML = `${latestTrack.title} - भक्ति अनुगूँज <span class="new-tag">नवीनतम भजन</span>`;
+      }
+      const homeListenBtn = document.getElementById('home-listen-btn');
+      if (homeListenBtn) {
+        homeListenBtn.textContent = `ऐप के अंदर '${latestTrack.title}' भजन सुनें`;
+      }
+
+      // 2. ऑडियो टैब (Tab 4) में सभी भजन + Rewind/Fast-Forward + Previous/Next बटन दिखाएं
+      const container = document.getElementById('all-audio-container');
       if (!container) return;
       container.innerHTML = '';
 
-      audioItems.forEach((item, idx) => {
+      allTracks.forEach((item, idx) => {
         const safeUrl = resolveAudioUrl(item.file);
+        const audioId = `bhajan-audio-player-${idx}`;
+
         const card = document.createElement('div');
         card.className = 'card';
         card.style.background = '#fffdf9';
 
         const h3 = document.createElement('h3');
-        h3.textContent = `${idx + 2}. ${item.title}`;
+        h3.textContent = `${idx + 1}. ${item.title} (भक्ति अनुगूँज)`;
+        if (idx === 0 && reversedNewTracks.length > 0) {
+          const badge = document.createElement('span');
+          badge.className = 'new-tag';
+          badge.textContent = 'नवीनतम';
+          h3.appendChild(badge);
+        }
         card.appendChild(h3);
 
         const audio = document.createElement('audio');
+        audio.id = audioId;
+        audio.setAttribute('data-track-index', String(idx));
         audio.controls = true;
         audio.preload = 'metadata';
+        audio.src = safeUrl;
         audio.setAttribute('aria-label', `${item.title} भजन प्लेयर`);
 
-        const source = document.createElement('source');
-        source.src = safeUrl;
-        source.type = 'audio/mpeg';
-        audio.appendChild(source);
+        // एक भजन समाप्त होने पर अपने आप अगला भजन चालू हो जाए
+        audio.addEventListener('ended', function() {
+          if (allTracks.length > 1) {
+            playAdjacentTrack(idx, 1);
+          }
+        });
         card.appendChild(audio);
+
+        // पहली पंक्ति: 10 सेकंड पीछे (Rewind) और 10 सेकंड आगे (Fast Forward) के बटन
+        const seekGroup = document.createElement('div');
+        seekGroup.className = 'audio-seek-group';
+        seekGroup.setAttribute('role', 'group');
+        seekGroup.setAttribute('aria-label', `${item.title} फॉरवर्ड और रिवाइंड कंट्रोल`);
+
+        const rewindBtn = document.createElement('button');
+        rewindBtn.type = 'button';
+        rewindBtn.className = 'seek-btn';
+        rewindBtn.textContent = '⏪ 10 सेक. पीछे';
+        rewindBtn.setAttribute('aria-label', `${item.title} 10 सेकंड पीछे करें (Rewind)`);
+        rewindBtn.addEventListener('click', () => seekAudio(audioId, -10, item.title));
+
+        const forwardBtn = document.createElement('button');
+        forwardBtn.type = 'button';
+        forwardBtn.className = 'seek-btn';
+        forwardBtn.textContent = '10 सेक. आगे ⏩';
+        forwardBtn.setAttribute('aria-label', `${item.title} 10 सेकंड आगे करें (Fast Forward)`);
+        forwardBtn.addEventListener('click', () => seekAudio(audioId, 10, item.title));
+
+        seekGroup.appendChild(rewindBtn);
+        seekGroup.appendChild(forwardBtn);
+        card.appendChild(seekGroup);
+
+        // दूसरी पंक्ति: पिछला भजन (Previous) और अगला भजन (Next) के बटन
+        const navGroup = document.createElement('div');
+        navGroup.className = 'audio-seek-group';
+        navGroup.setAttribute('role', 'group');
+        navGroup.setAttribute('aria-label', `${item.title} पिछला और अगला भजन कंट्रोल`);
+
+        const prevBtn = document.createElement('button');
+        prevBtn.type = 'button';
+        prevBtn.className = 'seek-btn nav-track-btn';
+        prevBtn.textContent = '⏮️ पिछला भजन';
+        prevBtn.setAttribute('aria-label', `पिछला भजन चलाएं (Previous Track)`);
+        prevBtn.addEventListener('click', () => playAdjacentTrack(idx, -1));
+
+        const nextBtn = document.createElement('button');
+        nextBtn.type = 'button';
+        nextBtn.className = 'seek-btn nav-track-btn';
+        nextBtn.textContent = 'अगला भजन ⏭️';
+        nextBtn.setAttribute('aria-label', `अगला भजन चलाएं (Next Track)`);
+        nextBtn.addEventListener('click', () => playAdjacentTrack(idx, 1));
+
+        navGroup.appendChild(prevBtn);
+        navGroup.appendChild(nextBtn);
+        card.appendChild(navGroup);
 
         const dlLink = document.createElement('a');
         dlLink.href = safeUrl;
@@ -1287,13 +1502,13 @@
         if (rows.length > 1) {
           const parsedQuestions = [];
           const extraAudios = [];
-          let latestYtFound = false;
-          let latestThoughtFound = false;
+          let latestYtUrl = '';
+          let latestThought = '';
 
           for (let i = 1; i < rows.length; i++) {
             const r = rows[i];
 
-            // कॉलम A से F: सनातन धर्म क्विज़
+            // 1. क्विज़ प्रश्न (कॉलम A से F)
             const qText = String(r[0] || '').trim();
             const o1 = String(r[1] || '').trim();
             const o2 = String(r[2] || '').trim();
@@ -1311,21 +1526,17 @@
               });
             }
 
-            // कॉलम G: लेटेस्ट YouTube वीडियो लिंक (शीट में जहाँ भी पहला वैध लिंक मिले)
-            if (!latestYtFound && r[6] && String(r[6]).trim().startsWith('http')) {
-              const ytUrl = String(r[6]).trim();
-              document.getElementById('home-youtube-link').href = ytUrl;
-              document.getElementById('video-tab-youtube-link').href = ytUrl;
-              latestYtFound = true;
+            // 2. लेटेस्ट YouTube वीडियो लिंक (कॉलम G)
+            if (r[6] && String(r[6]).trim().startsWith('http')) {
+              latestYtUrl = String(r[6]).trim();
             }
 
-            // कॉलम H: आज का सुविचार (शीट में जहाँ भी पहला सुविचार मिले)
-            if (!latestThoughtFound && r[7] && String(r[7]).trim() !== '') {
-              document.getElementById('home-thought-text').textContent = String(r[7]).trim();
-              latestThoughtFound = true;
+            // 3. आज का सुविचार (कॉलम H)
+            if (r[7] && String(r[7]).trim() !== '' && String(r[7]).trim() !== 'सुविचार') {
+              latestThought = String(r[7]).trim();
             }
 
-            // कॉलम I और कॉलम J: नए ऑडियो भजन
+            // 4. ऑडियो भजन (कॉलम I = भजन का नाम, कॉलम J = MP3 फाइल का नाम)
             if (r[8] && r[9]) {
               const bTitle = String(r[8]).trim();
               const bFile = String(r[9]).trim();
@@ -1339,20 +1550,29 @@
                 bFile !== 'फाइल का नाम' &&
                 bFile !== 'radha-to-diwani-kahlai.mp3'
               ) {
-                extraAudios.push({ title: bTitle, file: bFile });
+                const exists = extraAudios.some(item => item.file === bFile);
+                if (!exists) {
+                  extraAudios.push({ title: bTitle, file: bFile });
+                }
               }
             }
           }
 
+          if (latestYtUrl) {
+            document.getElementById('home-youtube-link').href = latestYtUrl;
+            document.getElementById('video-tab-youtube-link').href = latestYtUrl;
+          }
+          if (latestThought) {
+            document.getElementById('home-thought-text').textContent = latestThought;
+          }
           if (parsedQuestions.length > 0) {
             quizData = parsedQuestions;
           }
-          if (extraAudios.length > 0) {
-            renderDynamicAudios(extraAudios);
-          }
+
+          updateFeaturedAndAudioList(extraAudios);
         }
       } catch (e) {
-        // ऑफलाइन होने पर डिफ़ॉल्ट प्रश्न काम करेंगे
+        // ऑफलाइन होने पर डिफ़ॉल्ट प्रश्न और भजन काम करेंगे
       }
 
       sheetLoadComplete = true;
