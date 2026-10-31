@@ -169,6 +169,11 @@
       font-size: 1rem;
       margin-bottom: 12px;
     }
+    input[type="text"]:disabled {
+      background: #eeeeee;
+      color: #555555;
+      cursor: not-allowed;
+    }
     .status-msg {
       font-weight: bold;
       padding: 12px;
@@ -208,7 +213,7 @@
 
   <header role="banner">
     <div class="header-brand">
-      <img id="app-header-logo" src="bhakti%20anugoonj.png" alt="भक्ति अनुगूँज लोगो" class="header-logo" onerror="this.style.display='none'">
+      <img id="app-header-logo" src="bhakti%20anugoonj.png" alt="भक्ति अनुगूँज आधिकारिक लोगो" class="header-logo" onerror="this.style.display='none'">
       <div>
         <h1>भक्ति अनुगूँज</h1>
         <p>ओरिजिनल डिवोशनल संगीत एवं सनातन साधना</p>
@@ -248,7 +253,7 @@
       <div class="card">
         <h2>त्वरित साधना विकल्प</h2>
         <button type="button" class="action-btn" onclick="switchTab('jap')">108 नाम-जाप शुरू करें (1 माला = 100 पॉइंट्स)</button>
-        <button type="button" class="action-btn secondary-btn" onclick="switchTab('quiz')">आज की धर्म क्विज़ खेलें</button>
+        <button type="button" class="action-btn secondary-btn" onclick="switchTab('quiz')">आज की धर्म क्विज़ खेलें (दैनिक 10 प्रश्न)</button>
       </div>
     </section>
 
@@ -290,8 +295,8 @@
     <!-- TAB 3: DHARMA QUIZ -->
     <section id="panel-quiz" role="tabpanel" aria-labelledby="tab-btn-quiz" class="tab-panel">
       <div class="card">
-        <h2>सनातन धर्म क्विज़</h2>
-        <p style="font-size:0.9rem; color:#555;">नियम: प्रत्येक प्रश्न के लिए <strong>30 सेकंड का समय</strong> मिलेगा। सही उत्तर पर +10 पॉइंट्स।</p>
+        <h2>सनातन धर्म क्विज़ (दैनिक 10 प्रश्न)</h2>
+        <p style="font-size:0.9rem; color:#555;">नियम: प्रतिदिन आपको <strong>अधिकतम 10 नए प्रश्न</strong> मिलेंगे। प्रत्येक प्रश्न के लिए <strong>30 सेकंड</strong> का समय है और सही उत्तर पर <strong>+10 पॉइंट्स</strong> मिलेंगे। एक बार खेला गया प्रश्न दोबारा कभी नहीं खुलेगा।</p>
         
         <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:8px; flex-wrap:wrap; gap:6px;">
           <p id="quiz-progress" style="font-weight:bold; color:var(--primary); margin:0;">प्रश्न लोड हो रहा है...</p>
@@ -389,13 +394,15 @@
     <section id="panel-profile" role="tabpanel" aria-labelledby="tab-btn-profile" class="tab-panel">
       <div class="card">
         <h2>मेरी साधक प्रोफाइल</h2>
+        <p id="profile-lock-notice" style="font-size:0.9rem; color:#444;">नोट: फर्जी प्रमाण-पत्र रोकने के लिए आपका शुभ नाम एक बार सेव होने के बाद स्थायी रूप से लॉक हो जाएगा।</p>
+
         <label for="profile-name-input" style="display:block; margin-bottom:4px; font-weight:bold;">आपका शुभ नाम:</label>
         <input type="text" id="profile-name-input" placeholder="अपना नाम लिखें (उदा. राहुल यादव)">
 
         <label for="profile-city-input" style="display:block; margin-bottom:4px; font-weight:bold;">आपका शहर / धाम:</label>
         <input type="text" id="profile-city-input" placeholder="उदा. वाराणसी (काशी)">
 
-        <button type="button" id="save-profile-btn" class="action-btn">प्रोफाइल सेव करें</button>
+        <button type="button" id="save-profile-btn" class="action-btn">प्रोफाइल सेव व लॉक करें</button>
         <div id="profile-save-msg" class="status-msg" role="status" aria-live="polite" style="background:#e8f5e9; color:#1b5e20;"></div>
       </div>
 
@@ -405,7 +412,7 @@
         <p>वर्तमान उपाधि: <span id="wallet-user-badge" class="badge">जिज्ञासु</span></p>
         <ul>
           <li>जप माला से अर्जित पॉइंट्स (100/माला): <strong id="wallet-mala-points">0</strong> (आज: <span id="wallet-today-malas">0</span>, कुल मालाएं: <span id="wallet-total-malas">0</span>)</li>
-          <li>धर्म क्विज़ से अर्जित पॉइंट्स (10/सही उत्तर): <strong id="wallet-quiz-points">0</strong></li>
+          <li>धर्म क्विज़ से अर्जित पॉइंट्स (10/सही उत्तर): <strong id="wallet-quiz-points">0</strong> (आज खेले गए प्रश्न: <span id="wallet-today-quiz">0</span> / 10)</li>
           <li><strong>कुल वॉलेट पॉइंट्स: <span id="wallet-total-points" style="font-size:1.3rem; color:var(--primary);">0</span></strong></li>
           <li>सुरक्षा सत्यापन कोड (Security ID): <strong id="wallet-verify-code" style="color:#1b5e20;">BA-0000</strong></li>
         </ul>
@@ -416,6 +423,24 @@
         <div id="download-msg" class="status-msg" role="status" aria-live="polite" style="background:#e3f2fd; color:#0d47a1;"></div>
 
         <canvas id="cert-canvas" width="900" height="620" style="display:none;" aria-hidden="true"></canvas>
+      </div>
+
+      <!-- साधना रिकवरी कोड (Backup & Restore) सेक्शन -->
+      <div class="card">
+        <h2>साधना डेटा सुरक्षा एवं रिकवरी कोड</h2>
+        <p style="font-size:0.95rem; color:#444;">यदि आपका ऐप कभी अनइंस्टॉल हो जाए या आप फोन बदलें, तो नीचे दिए गए अपने <strong>सुरक्षित रिकवरी कोड</strong> को किसी डायरी या WhatsApp में सेव कर लें। यह कोड डिजिटल सिग्नेचर से लॉक रहता है (इसमें कोई बदलाव या छेड़छाड़ संभव नहीं है)।</p>
+
+        <label for="recovery-code-display" style="display:block; margin-bottom:4px; font-weight:bold;">आपका वर्तमान रिकवरी कोड (हर पॉइंट बढ़ने पर अपडेट होता है):</label>
+        <input type="text" id="recovery-code-display" readonly aria-label="आपका वर्तमान साधना रिकवरी कोड">
+        <button type="button" id="copy-recovery-btn" class="action-btn secondary-btn">अपना रिकवरी कोड कॉपी करें</button>
+
+        <hr style="margin:20px 0; border:0; border-top:1px solid #ddd;">
+
+        <h3>पुराना साधना डेटा रीस्टोर (Restore) करें</h3>
+        <label for="restore-code-input" style="display:block; margin-bottom:4px; font-weight:bold;">अपना सेव किया हुआ रिकवरी कोड यहाँ पेस्ट करें:</label>
+        <input type="text" id="restore-code-input" placeholder="उदा. BA5-...">
+        <button type="button" id="restore-data-btn" class="action-btn">साधना डेटा रीस्टोर करें</button>
+        <div id="recovery-status-msg" class="status-msg" role="status" aria-live="assertive"></div>
       </div>
 
       <div class="card">
@@ -441,7 +466,7 @@
   </main>
 
   <script>
-    // --- स्मार्ट लोगो लोडर (.png और .jpg दोनों को अपने आप पहचान लेगा) ---
+    // --- 1. स्मार्ट लोगो लोडर (.png और .jpg दोनों को अपने आप पहचान लेगा) ---
     (function initLogo() {
       const candidateLogos = [
         "bhakti anugoonj.png",
@@ -480,6 +505,18 @@
       checkNext(0);
     })();
 
+    // --- 2. एक समय पर एक ही ऑडियो भजन बजे (Auto-Pause Other Audios) ---
+    document.addEventListener('play', function(e) {
+      if (e.target && e.target.tagName === 'AUDIO') {
+        const allAudios = document.querySelectorAll('audio');
+        allAudios.forEach(function(aud) {
+          if (aud !== e.target) {
+            aud.pause();
+          }
+        });
+      }
+    }, true);
+
     function getStore(key, fallback) {
       try {
         const val = localStorage.getItem(key);
@@ -495,7 +532,9 @@
       return d.getFullYear() + '-' + String(d.getMonth() + 1).padStart(2, '0') + '-' + String(d.getDate()).padStart(2, '0');
     }
 
+    const DAILY_QUIZ_LIMIT = 10; // प्रतिदिन अधिकतम 10 प्रश्नों की सख्त सीमा
     let currentActiveTab = 'home';
+    let sheetLoadComplete = false;
     const tabMap = ['home', 'jap', 'quiz', 'audio', 'video', 'profile'];
 
     function switchTab(tabKey) {
@@ -513,7 +552,9 @@
       });
 
       if (tabKey === 'quiz') {
-        renderQuizUI(true);
+        if (sheetLoadComplete) {
+          renderQuizUI(true);
+        }
       } else {
         stopQuizTimer();
       }
@@ -535,13 +576,21 @@
 
     let userName = getStore('ba_v4_name', getStore('ba_v3_name', getStore('ba_v2_name', 'साधक')));
     let userCity = getStore('ba_v4_city', getStore('ba_v3_city', getStore('ba_v2_city', 'काशी')));
+    let isProfileLocked = getStore('ba_v4_prof_locked', 'false') === 'true';
     let quizPoints = getMigratedInt('ba_v4_quiz_pts', 'ba_v3_quiz_pts', 'ba_v2_quiz_pts');
     let malaPoints = getMigratedInt('ba_v4_mala_pts', 'ba_v3_mala_pts', 'ba_v2_mala_pts');
     let malaCount = getMigratedInt('ba_v4_mala_cnt', 'ba_v3_mala_cnt', 'ba_v2_mala_cnt');
     let totalMalas = getMigratedInt('ba_v4_malas_done', 'ba_v3_malas_done', 'ba_v2_malas_done');
     let activeMantra = getStore('ba_v4_mantra', getStore('ba_v3_mantra', getStore('ba_v2_mantra', 'राधा-राधा')));
 
+    if (userName !== 'साधक' && userName.trim() !== '') {
+      isProfileLocked = true;
+      setStore('ba_v4_prof_locked', 'true');
+    }
+
     const todayStr = getTodayDateString();
+
+    // दैनिक माला काउंटर रीसेट (तारीख बदलने पर)
     let savedMalaDate = getStore('ba_v4_mala_date', todayStr);
     let todayMalas = parseInt(getStore('ba_v4_today_malas', '0'), 10) || 0;
     if (savedMalaDate !== todayStr) {
@@ -549,6 +598,36 @@
       setStore('ba_v4_mala_date', todayStr);
       setStore('ba_v4_today_malas', 0);
     }
+
+    // दैनिक 10 प्रश्न काउंटर (तारीख बदलने पर आज की गिनती 0 होगी, पर पुराने प्रश्न लॉक ही रहेंगे)
+    let savedQuizDate = getStore('ba_v4_quiz_date', todayStr);
+    let todayQuizCount = parseInt(getStore('ba_v4_quiz_today_cnt', '0'), 10) || 0;
+    if (savedQuizDate !== todayStr) {
+      todayQuizCount = 0;
+      savedQuizDate = todayStr;
+      setStore('ba_v4_quiz_date', todayStr);
+      setStore('ba_v4_quiz_today_cnt', 0);
+    }
+
+    function checkAndResetDailyQuizCounter() {
+      const nowDate = getTodayDateString();
+      if (savedQuizDate !== nowDate) {
+        savedQuizDate = nowDate;
+        todayQuizCount = 0;
+        setStore('ba_v4_quiz_date', nowDate);
+        setStore('ba_v4_quiz_today_cnt', 0);
+      }
+    }
+
+    // पहले खेले जा चुके प्रश्नों की स्थायी मेमोरी
+    let answeredQuestions = [];
+    try {
+      answeredQuestions = JSON.parse(getStore('ba_v4_answered_qs', '[]'));
+      if (!Array.isArray(answeredQuestions)) answeredQuestions = [];
+    } catch (e) {
+      answeredQuestions = [];
+    }
+    let minAnsweredCount = parseInt(getStore('ba_v4_min_ans_cnt', '0'), 10) || 0;
 
     function getBadgeTitle(pts) {
       if (pts >= 1000000) return 'धर्मरक्षक';
@@ -558,18 +637,71 @@
       return 'जिज्ञासु';
     }
 
+    function computeChecksum(str) {
+      let h1 = 0xdeadbeef ^ str.length;
+      let h2 = 0x41c6ce57 ^ str.length;
+      for (let i = 0; i < str.length; i++) {
+        const ch = str.charCodeAt(i);
+        h1 = Math.imul(h1 ^ ch, 2654435761);
+        h2 = Math.imul(h2 ^ ch, 1597334677);
+      }
+      h1 = Math.imul(h1 ^ (h1 >>> 16), 2246822507) ^ Math.imul(h2 ^ (h2 >>> 13), 3266489909);
+      h2 = Math.imul(h2 ^ (h2 >>> 16), 2246822507) ^ Math.imul(h1 ^ (h1 >>> 13), 3266489909);
+      const combined = 4294967296 * (2097151 & h2) + (h1 >>> 0);
+      return combined.toString(36).toUpperCase().padStart(8, '0').slice(-8);
+    }
+
     function generateVerifyCode(name, pts, malas) {
       const raw = (name || 'साधक') + '-' + pts + '-' + malas;
-      let hash = 0;
-      for (let i = 0; i < raw.length; i++) {
-        hash = ((hash << 5) - hash) + raw.charCodeAt(i);
-        hash |= 0;
+      return 'BA-' + computeChecksum(raw).slice(0, 6);
+    }
+
+    // --- 3. टेम्पर-प्रूफ साधना रिकवरी कोड जनरेटर एवं वेरिफायर ---
+    function generateRecoveryKey() {
+      const playedCount = Math.max(answeredQuestions.length, minAnsweredCount);
+      const payloadObj = {
+        n: userName,
+        c: userCity,
+        qp: quizPoints,
+        mp: malaPoints,
+        tm: totalMalas,
+        mc: malaCount,
+        ac: playedCount,
+        qd: savedQuizDate,
+        qt: todayQuizCount
+      };
+      try {
+        const jsonStr = JSON.stringify(payloadObj);
+        const b64 = btoa(encodeURIComponent(jsonStr));
+        const sig = computeChecksum(b64 + '|BHAKTI_ANUGOONJ_SECRET_2026');
+        return 'BA5-' + b64 + '-' + sig;
+      } catch (e) {
+        return '';
       }
-      const codeNum = Math.abs(hash % 900000) + 100000;
-      return 'BA-' + codeNum;
+    }
+
+    function applyProfileLockUI() {
+      const nameInput = document.getElementById('profile-name-input');
+      const saveBtn = document.getElementById('save-profile-btn');
+      const lockNotice = document.getElementById('profile-lock-notice');
+
+      if (isProfileLocked && userName !== 'साधक') {
+        nameInput.value = userName;
+        nameInput.disabled = true;
+        saveBtn.textContent = 'शहर अपडेट करें (नाम लॉक है)';
+        if (lockNotice) {
+          lockNotice.textContent = 'आपका शुभ नाम (' + userName + ') स्थायी रूप से लॉक और सुरक्षित है।';
+          lockNotice.style.color = '#1b5e20';
+          lockNotice.style.fontWeight = 'bold';
+        }
+      } else {
+        nameInput.disabled = false;
+        saveBtn.textContent = 'प्रोफाइल सेव व लॉक करें';
+      }
     }
 
     function updateAllStatsUI() {
+      checkAndResetDailyQuizCounter();
       const totalPts = quizPoints + malaPoints;
       const badge = getBadgeTitle(totalPts);
 
@@ -591,8 +723,16 @@
       document.getElementById('wallet-today-malas').textContent = todayMalas;
       document.getElementById('wallet-total-malas').textContent = totalMalas;
       document.getElementById('wallet-quiz-points').textContent = quizPoints;
+      const todayQuizEl = document.getElementById('wallet-today-quiz');
+      if (todayQuizEl) todayQuizEl.textContent = Math.min(todayQuizCount, DAILY_QUIZ_LIMIT);
       document.getElementById('wallet-total-points').textContent = totalPts;
       document.getElementById('wallet-verify-code').textContent = generateVerifyCode(userName, totalPts, totalMalas);
+
+      const recInput = document.getElementById('recovery-code-display');
+      if (recInput) {
+        recInput.value = generateRecoveryKey();
+      }
+      applyProfileLockUI();
     }
 
     // --- JAP MALA LOGIC ---
@@ -658,22 +798,153 @@
       updateAllStatsUI();
     });
 
-    // --- PROFILE LOGIC ---
+    // --- PROFILE & RECOVERY LOGIC ---
     document.getElementById('profile-name-input').value = userName !== 'साधक' ? userName : '';
     document.getElementById('profile-city-input').value = userCity !== 'काशी' ? userCity : '';
 
     document.getElementById('save-profile-btn').addEventListener('click', () => {
       const n = document.getElementById('profile-name-input').value.trim();
       const c = document.getElementById('profile-city-input').value.trim();
-      userName = n || 'साधक';
+      const msg = document.getElementById('profile-save-msg');
+
+      if (!isProfileLocked) {
+        if (!n) {
+          msg.style.display = 'block';
+          msg.style.background = '#ffebee';
+          msg.style.color = '#b71c1c';
+          msg.textContent = 'कृपया सेव करने से पहले अपना शुभ नाम लिखें।';
+          return;
+        }
+        userName = n;
+        isProfileLocked = true;
+        setStore('ba_v4_name', userName);
+        setStore('ba_v4_prof_locked', 'true');
+      }
+
       userCity = c || 'काशी';
-      setStore('ba_v4_name', userName);
       setStore('ba_v4_city', userCity);
       updateAllStatsUI();
 
-      const msg = document.getElementById('profile-save-msg');
       msg.style.display = 'block';
-      msg.textContent = 'आपकी प्रोफाइल सफलतापूर्वक सेव हो गई है!';
+      msg.style.background = '#e8f5e9';
+      msg.style.color = '#1b5e20';
+      msg.textContent = 'आपकी प्रोफाइल सफलतापूर्वक सेव और सुरक्षित हो गई है!';
+    });
+
+    document.getElementById('copy-recovery-btn').addEventListener('click', () => {
+      const codeVal = document.getElementById('recovery-code-display').value;
+      const statusEl = document.getElementById('recovery-status-msg');
+      if (navigator.clipboard && navigator.clipboard.writeText) {
+        navigator.clipboard.writeText(codeVal).then(() => {
+          statusEl.style.display = 'block';
+          statusEl.style.background = '#e8f5e9';
+          statusEl.style.color = '#1b5e20';
+          statusEl.textContent = 'आपका रिकवरी कोड कॉपी हो गया है! इसे किसी सुरक्षित जगह पेस्ट कर लें।';
+        }).catch(() => {
+          document.getElementById('recovery-code-display').select();
+          document.execCommand('copy');
+          statusEl.style.display = 'block';
+          statusEl.style.background = '#e8f5e9';
+          statusEl.style.color = '#1b5e20';
+          statusEl.textContent = 'आपका रिकवरी कोड कॉपी हो गया है!';
+        });
+      } else {
+        document.getElementById('recovery-code-display').select();
+        document.execCommand('copy');
+        statusEl.style.display = 'block';
+        statusEl.style.background = '#e8f5e9';
+        statusEl.style.color = '#1b5e20';
+        statusEl.textContent = 'आपका रिकवरी कोड कॉपी हो गया है!';
+      }
+    });
+
+    document.getElementById('restore-data-btn').addEventListener('click', () => {
+      const rawCode = document.getElementById('restore-code-input').value.trim();
+      const statusEl = document.getElementById('recovery-status-msg');
+      statusEl.style.display = 'block';
+
+      if (!rawCode.startsWith('BA5-')) {
+        statusEl.style.background = '#ffebee';
+        statusEl.style.color = '#b71c1c';
+        statusEl.textContent = 'अमान्य रिकवरी कोड! कृपया BA5- से शुरू होने वाला सही कोड डालें।';
+        return;
+      }
+
+      const parts = rawCode.split('-');
+      if (parts.length !== 3) {
+        statusEl.style.background = '#ffebee';
+        statusEl.style.color = '#b71c1c';
+        statusEl.textContent = 'रिकवरी कोड अधूरा या गलत है।';
+        return;
+      }
+
+      const b64 = parts[1];
+      const providedSig = parts[2].toUpperCase();
+      const expectedSig = computeChecksum(b64 + '|BHAKTI_ANUGOONJ_SECRET_2026');
+
+      if (providedSig !== expectedSig) {
+        statusEl.style.background = '#ffebee';
+        statusEl.style.color = '#b71c1c';
+        statusEl.textContent = 'सुरक्षा सत्यापन विफल! इस कोड के साथ छेड़छाड़ की गई है या यह गलत है।';
+        return;
+      }
+
+      try {
+        const jsonStr = decodeURIComponent(atob(b64));
+        const data = JSON.parse(jsonStr);
+
+        if (isProfileLocked && userName !== 'साधक' && data.n !== 'साधक' && data.n !== userName) {
+          statusEl.style.background = '#ffebee';
+          statusEl.style.color = '#b71c1c';
+          statusEl.textContent = `यह रिकवरी कोड "${data.n}" के नाम का है, जबकि इस फोन पर "${userName}" की प्रोफाइल लॉक है।`;
+          return;
+        }
+
+        if (data.n && data.n !== 'साधक') {
+          userName = data.n;
+          isProfileLocked = true;
+          setStore('ba_v4_name', userName);
+          setStore('ba_v4_prof_locked', 'true');
+        }
+        if (data.c) {
+          userCity = data.c;
+          setStore('ba_v4_city', userCity);
+        }
+
+        quizPoints = Math.max(quizPoints, parseInt(data.qp, 10) || 0);
+        malaPoints = Math.max(malaPoints, parseInt(data.mp, 10) || 0);
+        totalMalas = Math.max(totalMalas, parseInt(data.tm, 10) || 0);
+        malaCount = Math.max(malaCount, parseInt(data.mc, 10) || 0);
+        minAnsweredCount = Math.max(minAnsweredCount, parseInt(data.ac, 10) || 0);
+
+        // यदि रिकवरी कोड आज ही का है, तो आज खेले गए प्रश्नों की गिनती भी सुरक्षित रूप से सिंक करें
+        const nowStr = getTodayDateString();
+        if (data.qd === nowStr) {
+          todayQuizCount = Math.max(todayQuizCount, parseInt(data.qt, 10) || 0);
+          savedQuizDate = nowStr;
+          setStore('ba_v4_quiz_date', nowStr);
+          setStore('ba_v4_quiz_today_cnt', todayQuizCount);
+        }
+
+        setStore('ba_v4_quiz_pts', quizPoints);
+        setStore('ba_v4_mala_pts', malaPoints);
+        setStore('ba_v4_malas_done', totalMalas);
+        setStore('ba_v4_mala_cnt', malaCount);
+        setStore('ba_v4_min_ans_cnt', minAnsweredCount);
+
+        syncLegacyProgress();
+        currentQIndex = findFirstUnansweredIndex();
+        updateAllStatsUI();
+
+        statusEl.style.background = '#e8f5e9';
+        statusEl.style.color = '#1b5e20';
+        statusEl.textContent = `बधाई हो ${userName} जी! आपका साधना डेटा और ${quizPoints + malaPoints} पॉइंट्स सफलतापूर्वक रीस्टोर हो गए हैं।`;
+        document.getElementById('restore-code-input').value = '';
+      } catch (err) {
+        statusEl.style.background = '#ffebee';
+        statusEl.style.color = '#b71c1c';
+        statusEl.textContent = 'कोड पढ़ने में त्रुटि हुई। कृपया पूरा कोड सही से कॉपी करके डालें।';
+      }
     });
 
     // --- CERTIFICATE DOWNLOAD LOGIC ---
@@ -745,7 +1016,7 @@
       }
     });
 
-    // --- DHARMA QUIZ & GOOGLE SHEET SYNC (30 QUESTIONS + VIDEO + SUVICHAR + DYNAMIC AUDIO) ---
+    // --- DHARMA QUIZ & GOOGLE SHEET SYNC (DAILY 10 LIMIT + PERMANENT QUESTION TRACKER + DYNAMIC AUDIO) ---
     const SHEET_ID = '1ZNn71F4f4Wyk1lxpnLLkT89bBXGm0uN_FaTGOBloNPY';
     const SHEET_CSV_URL = `https://docs.google.com/spreadsheets/d/${SHEET_ID}/export?format=csv`;
 
@@ -763,14 +1034,57 @@
     let quizTimerInterval = null;
     let timeRemaining = 30;
 
-    let savedQuizDate = getStore('ba_v4_quiz_date', '');
-    if (savedQuizDate !== todayStr) {
-      setStore('ba_v4_quiz_date', todayStr);
-      setStore('ba_v4_quiz_idx', '0');
-      setStore('ba_v4_quiz_done_today', 'false');
+    function recordQuestionAttempt(qText) {
+      checkAndResetDailyQuizCounter();
+      const key = String(qText || '').trim();
+      if (key && !answeredQuestions.includes(key)) {
+        answeredQuestions.push(key);
+        setStore('ba_v4_answered_qs', JSON.stringify(answeredQuestions));
+      }
+      if (answeredQuestions.length > minAnsweredCount) {
+        minAnsweredCount = answeredQuestions.length;
+        setStore('ba_v4_min_ans_cnt', minAnsweredCount);
+      }
+
+      // आज खेले गए प्रश्नों की गिनती +1 बढ़ाएं
+      todayQuizCount++;
+      setStore('ba_v4_quiz_date', savedQuizDate);
+      setStore('ba_v4_quiz_today_cnt', todayQuizCount);
+
+      updateAllStatsUI();
     }
-    currentQIndex = parseInt(getStore('ba_v4_quiz_idx', '0'), 10) || 0;
-    let isQuizDoneToday = getStore('ba_v4_quiz_done_today', 'false') === 'true';
+
+    function isQuestionAnswered(qText) {
+      return answeredQuestions.includes(String(qText || '').trim());
+    }
+
+    function syncLegacyProgress() {
+      const legacyIdx = parseInt(getStore('ba_v4_quiz_idx', '0'), 10) || 0;
+      const legacyDone = getStore('ba_v4_quiz_done_today', 'false') === 'true';
+
+      let targetCount = Math.max(legacyIdx, minAnsweredCount);
+      if (targetCount === 0 && (legacyDone || quizPoints > 0) && quizData.length >= 20) {
+        targetCount = Math.max(20, Math.floor(quizPoints / 10));
+      }
+
+      const limit = Math.min(targetCount, quizData.length);
+      for (let i = 0; i < limit; i++) {
+        const qKey = String(quizData[i].q || '').trim();
+        if (qKey && !answeredQuestions.includes(qKey)) {
+          answeredQuestions.push(qKey);
+        }
+      }
+      setStore('ba_v4_answered_qs', JSON.stringify(answeredQuestions));
+    }
+
+    function findFirstUnansweredIndex() {
+      for (let i = 0; i < quizData.length; i++) {
+        if (!isQuestionAnswered(quizData[i].q)) {
+          return i;
+        }
+      }
+      return quizData.length;
+    }
 
     function parseCSV(text) {
       const rows = [];
@@ -813,12 +1127,21 @@
       return rows;
     }
 
+    function resolveAudioUrl(fileStr) {
+      const clean = String(fileStr || '').trim();
+      if (clean.startsWith('http://') || clean.startsWith('https://')) {
+        return clean;
+      }
+      return encodeURI(clean);
+    }
+
     function renderDynamicAudios(audioItems) {
       const container = document.getElementById('dynamic-audio-list');
       if (!container) return;
       container.innerHTML = '';
 
       audioItems.forEach((item, idx) => {
+        const safeUrl = resolveAudioUrl(item.file);
         const card = document.createElement('div');
         card.className = 'card';
         card.style.background = '#fffdf9';
@@ -833,14 +1156,14 @@
         audio.setAttribute('aria-label', `${item.title} भजन प्लेयर`);
 
         const source = document.createElement('source');
-        source.src = item.file;
+        source.src = safeUrl;
         source.type = 'audio/mpeg';
         audio.appendChild(source);
         card.appendChild(audio);
 
         const dlLink = document.createElement('a');
-        dlLink.href = item.file;
-        dlLink.setAttribute('download', item.file);
+        dlLink.href = safeUrl;
+        dlLink.setAttribute('download', item.file.replace(/\s+/g, '_'));
         dlLink.className = 'btn-link secondary-btn';
         dlLink.style.marginTop = '12px';
         dlLink.textContent = 'यह भजन फोन में डाउनलोड करें (MP3)';
@@ -863,7 +1186,6 @@
 
           for (let i = 1; i < rows.length; i++) {
             const r = rows[i];
-            // कॉलम A से F: सनातन धर्म क्विज़ के प्रश्न
             if (r[0] && r[1] && r[2] && r[3] && r[4]) {
               let ansIdx = 0;
               const rawAns = String(r[5] || '').trim().toUpperCase();
@@ -882,24 +1204,24 @@
               });
             }
 
-            // कॉलम G: लेटेस्ट YouTube वीडियो लिंक (पहली पंक्ति से)
             if (i === 1 && r[6] && r[6].startsWith('http')) {
               document.getElementById('home-youtube-link').href = r[6];
               document.getElementById('video-tab-youtube-link').href = r[6];
             }
 
-            // कॉलम H: आज का सुविचार (पहली पंक्ति से)
             if (i === 1 && r[7]) {
               document.getElementById('home-thought-text').textContent = r[7];
             }
 
-            // कॉलम I (r[8]): भजन का नाम | कॉलम J (r[9]): MP3 फाइल का नाम या लिंक
             if (r[8] && r[9]) {
               const bTitle = r[8].trim();
               const bFile = r[9].trim();
               if (
                 bTitle.toLowerCase() !== 'bhajan title' &&
+                bTitle.toLowerCase() !== 'bhajan name' &&
                 bTitle !== 'भजन का नाम' &&
+                bFile.toLowerCase() !== 'file name' &&
+                bFile !== 'फाइल का नाम' &&
                 bFile !== 'radha-to-diwani-kahlai.mp3'
               ) {
                 extraAudios.push({ title: bTitle, file: bFile });
@@ -915,8 +1237,13 @@
           }
         }
       } catch (e) {
-        // ऑफलाइन या एरर होने पर डिफ़ॉल्ट प्रश्न काम करेंगे
+        // ऑफलाइन होने पर डिफ़ॉल्ट प्रश्न काम करेंगे
       }
+
+      sheetLoadComplete = true;
+      syncLegacyProgress();
+      currentQIndex = findFirstUnansweredIndex();
+      updateAllStatsUI();
       renderQuizUI(currentActiveTab === 'quiz');
     }
 
@@ -947,10 +1274,24 @@
       }, 1000);
     }
 
+    function updateNextButtonText() {
+      const nextBtn = document.getElementById('next-question-btn');
+      if (todayQuizCount >= DAILY_QUIZ_LIMIT) {
+        nextBtn.textContent = 'आज के 10 प्रश्न पूर्ण (परिणाम देखें)';
+      } else {
+        nextBtn.textContent = 'अगला प्रश्न';
+      }
+      nextBtn.style.display = 'block';
+    }
+
     function handleQuizTimeout() {
       if (quizLocked) return;
       quizLocked = true;
       const qObj = quizData[currentQIndex];
+
+      recordQuestionAttempt(qObj.q);
+      setStore('ba_v4_quiz_idx', currentQIndex + 1);
+
       const allBtns = document.querySelectorAll('#quiz-options .option-btn');
       allBtns.forEach((btn, idx) => {
         btn.disabled = true;
@@ -961,34 +1302,50 @@
       fb.style.display = 'block';
       fb.style.background = '#ffebee';
       fb.style.color = '#b71c1c';
-      fb.textContent = `समय समाप्त! इस प्रश्न का सही उत्तर था: "${qObj.opts[qObj.ans]}"`;
+      fb.textContent = `समय समाप्त! इस प्रश्न का सही उत्तर था: "${qObj.opts[qObj.ans]}" (आज खेले गए: ${todayQuizCount}/${DAILY_QUIZ_LIMIT})`;
 
-      document.getElementById('next-question-btn').style.display = 'block';
+      updateNextButtonText();
     }
 
     function renderQuizUI(shouldStartTimer) {
       stopQuizTimer();
+      checkAndResetDailyQuizCounter();
+
       const progEl = document.getElementById('quiz-progress');
+      const timerEl = document.getElementById('quiz-timer');
       const qEl = document.getElementById('quiz-question');
       const optsEl = document.getElementById('quiz-options');
       const fbEl = document.getElementById('quiz-feedback');
       const nextBtn = document.getElementById('next-question-btn');
 
-      if (isQuizDoneToday || currentQIndex >= quizData.length) {
-        isQuizDoneToday = true;
-        setStore('ba_v4_quiz_done_today', 'true');
-        progEl.textContent = `आज के सभी ${quizData.length} प्रश्न पूर्ण!`;
-        document.getElementById('quiz-timer').textContent = 'पूर्ण';
-        qEl.textContent = 'बधाई हो! आपने आज की सनातन धर्म क्विज़ सफलतापूर्वक पूर्ण कर ली है। कल नए प्रश्नों के साथ पुनः पधारें!';
+      currentQIndex = findFirstUnansweredIndex();
+
+      // 1. यदि शीट के सारे प्रश्न समाप्त हो चुके हैं
+      if (currentQIndex >= quizData.length) {
+        progEl.textContent = `सभी ${quizData.length} उपलब्ध प्रश्न पूर्ण!`;
+        timerEl.textContent = 'पूर्ण';
+        qEl.textContent = 'बधाई हो! आपने अब तक के सभी उपलब्ध प्रश्न सफलतापूर्वक पूर्ण कर लिए हैं। जब नए प्रश्न जोड़े जाएंगे, तो वे यहाँ अपने आप खुलेंगे!';
         optsEl.innerHTML = '';
         fbEl.style.display = 'none';
         nextBtn.style.display = 'none';
         return;
       }
 
+      // 2. यदि आज के 10 प्रश्नों की दैनिक सीमा पूरी हो चुकी है
+      if (todayQuizCount >= DAILY_QUIZ_LIMIT) {
+        progEl.textContent = `आज का लक्ष्य पूर्ण (${DAILY_QUIZ_LIMIT} / ${DAILY_QUIZ_LIMIT} प्रश्न)`;
+        timerEl.textContent = 'कल खुलेंगे';
+        qEl.textContent = `बधाई हो! आज के आपके ${DAILY_QUIZ_LIMIT} दैनिक प्रश्न पूर्ण हो गए हैं। अब आगे के नए प्रश्न (प्रश्न संख्या ${currentQIndex + 1} से) कल खुलेंगे। तब तक आप जप माला और भजन का आनंद लें!`;
+        optsEl.innerHTML = '';
+        fbEl.style.display = 'none';
+        nextBtn.style.display = 'none';
+        return;
+      }
+
+      // 3. अगला नया प्रश्न दिखाएं (आज के 10 की सीमा के भीतर)
       quizLocked = false;
       const qObj = quizData[currentQIndex];
-      progEl.textContent = `प्रश्न ${currentQIndex + 1} / ${quizData.length}`;
+      progEl.textContent = `आज का प्रश्न: ${todayQuizCount + 1} / ${DAILY_QUIZ_LIMIT} (कुल: ${currentQIndex + 1} / ${quizData.length})`;
       qEl.textContent = qObj.q;
       optsEl.innerHTML = '';
       fbEl.style.display = 'none';
@@ -1024,11 +1381,10 @@
         clickedBtn.classList.add('correct-opt');
         quizPoints += 10;
         setStore('ba_v4_quiz_pts', quizPoints);
-        updateAllStatsUI();
 
         fb.style.background = '#e8f5e9';
         fb.style.color = '#1b5e20';
-        fb.textContent = 'बिल्कुल सही उत्तर! आपको +10 साधना पॉइंट्स प्राप्त हुए।';
+        fb.textContent = `बिल्कुल सही उत्तर! आपको +10 साधना पॉइंट्स प्राप्त हुए।`;
       } else {
         clickedBtn.classList.add('wrong-opt');
         if (allBtns[qObj.ans]) allBtns[qObj.ans].classList.add('correct-opt');
@@ -1038,14 +1394,16 @@
         fb.textContent = `गलत उत्तर! सही उत्तर है: "${qObj.opts[qObj.ans]}"`;
       }
 
-      const nextBtn = document.getElementById('next-question-btn');
-      nextBtn.style.display = 'block';
-      nextBtn.focus();
+      // प्रश्न को स्थायी रूप से लॉक करें और आज की गिनती (1 से 10) बढ़ाएं
+      recordQuestionAttempt(qObj.q);
+      setStore('ba_v4_quiz_idx', currentQIndex + 1);
+
+      updateNextButtonText();
+      document.getElementById('next-question-btn').focus();
     }
 
     document.getElementById('next-question-btn').addEventListener('click', () => {
-      currentQIndex++;
-      setStore('ba_v4_quiz_idx', currentQIndex);
+      currentQIndex = findFirstUnansweredIndex();
       renderQuizUI(true);
       document.getElementById('quiz-question').focus();
     });
