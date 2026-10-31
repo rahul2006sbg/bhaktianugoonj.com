@@ -422,7 +422,7 @@
         </button>
         <div id="download-msg" class="status-msg" role="status" aria-live="polite" style="background:#e3f2fd; color:#0d47a1;"></div>
 
-        <canvas id="cert-canvas" width="900" height="620" style="display:none;" aria-hidden="true"></canvas>
+        <canvas id="cert-canvas" width="900" height="660" style="display:none;" aria-hidden="true"></canvas>
       </div>
 
       <!-- साधना रिकवरी कोड (Backup & Restore) सेक्शन -->
@@ -467,6 +467,9 @@
 
   <script>
     // --- 1. स्मार्ट लोगो लोडर (.png और .jpg दोनों को अपने आप पहचान लेगा) ---
+    let activeLogoUrl = "bhakti%20anugoonj.png";
+    let loadedLogoImageElement = null;
+
     (function initLogo() {
       const candidateLogos = [
         "bhakti anugoonj.png",
@@ -481,26 +484,29 @@
       ];
       function checkNext(idx) {
         if (idx >= candidateLogos.length) return;
+        const rawName = candidateLogos[idx];
+        const encodedUrl = encodeURI(rawName);
         const img = new Image();
         img.onload = function() {
-          const validUrl = candidateLogos[idx];
+          activeLogoUrl = encodedUrl;
+          loadedLogoImageElement = img;
           const headerImg = document.getElementById('app-header-logo');
           if (headerImg) {
-            headerImg.src = validUrl;
+            headerImg.src = encodedUrl;
             headerImg.style.display = 'block';
           }
           const fav = document.getElementById('dynamic-favicon');
           if (fav) {
-            fav.type = validUrl.endsWith('.png') ? 'image/png' : 'image/jpeg';
-            fav.href = validUrl;
+            fav.type = rawName.endsWith('.png') ? 'image/png' : 'image/jpeg';
+            fav.href = encodedUrl;
           }
           const appleFav = document.getElementById('dynamic-apple-icon');
-          if (appleFav) appleFav.href = validUrl;
+          if (appleFav) appleFav.href = encodedUrl;
         };
         img.onerror = function() {
           checkNext(idx + 1);
         };
-        img.src = candidateLogos[idx];
+        img.src = encodedUrl;
       }
       checkNext(0);
     })();
@@ -626,9 +632,9 @@
     }
     let minAnsweredCount = parseInt(getStore('ba_v4_min_ans_cnt', '0'), 10) || 0;
 
-    // पिछले बग की वजह से यदि 30वां प्रश्न (काशी विश्वनाथ) गलत लॉक हो गया था, तो उसे अनलॉक करें ताकि यूज़र दोबारा खेल सके
+    // यदि 30वां प्रश्न (काशी विश्वनाथ) पहले के बग की वजह से गलत लॉक हो गया था, तो उसे एक बार अनलॉक करें
     (function fixWronglyLockedKashiQuestion() {
-      if (getStore('ba_v4_kashi_bug_fixed_v2', 'false') === 'true') return;
+      if (getStore('ba_v4_kashi_bug_fixed_v3', 'false') === 'true') return;
       const beforeLen = answeredQuestions.length;
       answeredQuestions = answeredQuestions.filter(q => !String(q).includes('काशी विश्वनाथ'));
       if (answeredQuestions.length < beforeLen) {
@@ -642,7 +648,7 @@
           setStore('ba_v4_min_ans_cnt', minAnsweredCount);
         }
       }
-      setStore('ba_v4_kashi_bug_fixed_v2', 'true');
+      setStore('ba_v4_kashi_bug_fixed_v3', 'true');
     })();
 
     function getBadgeTitle(pts) {
@@ -959,13 +965,8 @@
       }
     });
 
-    document.getElementById('download-certificate-btn').addEventListener('click', () => {
-      const canvas = document.getElementById('cert-canvas');
-      const ctx = canvas.getContext('2d');
-      const totalPts = quizPoints + malaPoints;
-      const badge = getBadgeTitle(totalPts);
-      const verifyId = generateVerifyCode(userName, totalPts, totalMalas);
-
+    // --- CERTIFICATE DOWNLOAD LOGIC WITH SAFE LOGO RENDERING ---
+    function drawCertificateBaseAndText(ctx, canvas, totalPts, badge, verifyId, withLogoImg) {
       ctx.fillStyle = '#fff8f0';
       ctx.fillRect(0, 0, canvas.width, canvas.height);
 
@@ -977,39 +978,65 @@
       ctx.lineWidth = 3;
       ctx.strokeRect(32, 32, canvas.width - 64, canvas.height - 64);
 
+      if (withLogoImg) {
+        try {
+          const centerX = canvas.width / 2;
+          const centerY = 92;
+          const radius = 42;
+
+          ctx.save();
+          ctx.beginPath();
+          ctx.arc(centerX, centerY, radius, 0, Math.PI * 2, true);
+          ctx.closePath();
+          ctx.clip();
+          ctx.drawImage(withLogoImg, centerX - radius, centerY - radius, radius * 2, radius * 2);
+          ctx.restore();
+
+          ctx.beginPath();
+          ctx.arc(centerX, centerY, radius, 0, Math.PI * 2, true);
+          ctx.lineWidth = 3;
+          ctx.strokeStyle = '#ff8f00';
+          ctx.stroke();
+        } catch (e) {
+          // यदि लोगो ड्रा करने में कोई त्रुटि हो तो टेक्स्ट जारी रखें
+        }
+      }
+
       ctx.fillStyle = '#bf360c';
       ctx.textAlign = 'center';
-      ctx.font = 'bold 36px sans-serif';
-      ctx.fillText('भक्ति अनुगूँज - सनातन साधना प्रमाण-पत्र', canvas.width / 2, 100);
+      ctx.font = 'bold 34px sans-serif';
+      ctx.fillText('भक्ति अनुगूँज - सनातन साधना प्रमाण-पत्र', canvas.width / 2, 175);
 
       ctx.fillStyle = '#333333';
       ctx.font = '22px sans-serif';
-      ctx.fillText('यह आधिकारिक रूप से प्रमाणित किया जाता है कि', canvas.width / 2, 165);
+      ctx.fillText('यह आधिकारिक रूप से प्रमाणित किया जाता है कि', canvas.width / 2, 225);
 
       ctx.fillStyle = '#bf360c';
-      ctx.font = 'bold 34px sans-serif';
-      ctx.fillText(`${userName} (${userCity})`, canvas.width / 2, 220);
+      ctx.font = 'bold 32px sans-serif';
+      ctx.fillText(`${userName} (${userCity})`, canvas.width / 2, 280);
 
       ctx.fillStyle = '#1a1a1a';
-      ctx.font = '22px sans-serif';
-      ctx.fillText('ने भक्ति अनुगूँज ऐप पर नियमित नाम-जाप एवं सनातन धर्म ज्ञान के माध्यम से', canvas.width / 2, 275);
+      ctx.font = '21px sans-serif';
+      ctx.fillText('ने भक्ति अनुगूँज ऐप पर नियमित नाम-जाप एवं सनातन धर्म ज्ञान के माध्यम से', canvas.width / 2, 335);
 
       ctx.fillStyle = '#e65100';
-      ctx.font = 'bold 30px sans-serif';
-      ctx.fillText(`सम्मानित उपाधि: "${badge}"`, canvas.width / 2, 330);
+      ctx.font = 'bold 28px sans-serif';
+      ctx.fillText(`सम्मानित उपाधि: "${badge}"`, canvas.width / 2, 390);
 
       ctx.fillStyle = '#222222';
       ctx.font = 'bold 22px sans-serif';
-      ctx.fillText(`कुल अर्जित पॉइंट्स: ${totalPts}  |  पूर्ण जप मालाएं: ${totalMalas}`, canvas.width / 2, 390);
+      ctx.fillText(`कुल अर्जित पॉइंट्स: ${totalPts}  |  पूर्ण जप मालाएं: ${totalMalas}`, canvas.width / 2, 450);
 
       ctx.fillStyle = '#1b5e20';
       ctx.font = 'bold 20px sans-serif';
-      ctx.fillText(`सुरक्षा सत्यापन कोड (Security ID): ${verifyId}  |  दिनांक: ${todayStr}`, canvas.width / 2, 445);
+      ctx.fillText(`सुरक्षा सत्यापन कोड (Security ID): ${verifyId}  |  दिनांक: ${todayStr}`, canvas.width / 2, 510);
 
       ctx.fillStyle = '#bf360c';
       ctx.font = 'italic 20px sans-serif';
-      ctx.fillText('“श्रद्धावान् लभते ज्ञानम्” — भक्ति अनुगूँज परिवार की ओर से हार्दिक शुभकामनाएँ!', canvas.width / 2, 520);
+      ctx.fillText('“श्रद्धावान् लभते ज्ञानम्” — भक्ति अनुगूँज परिवार की ओर से हार्दिक शुभकामनाएँ!', canvas.width / 2, 585);
+    }
 
+    function triggerCanvasDownload(canvas, ctx, totalPts, badge, verifyId) {
       try {
         const dataUrl = canvas.toDataURL('image/png');
         const link = document.createElement('a');
@@ -1021,12 +1048,53 @@
 
         const dMsg = document.getElementById('download-msg');
         dMsg.style.display = 'block';
-        dMsg.textContent = 'आपका प्रमाण-पत्र (PNG Image) सफलतापूर्वक डाउनलोड हो रहा है!';
+        dMsg.textContent = 'आपका आधिकारिक प्रमाण-पत्र (PNG Image) सफलतापूर्वक डाउनलोड हो रहा है!';
       } catch (err) {
-        alert('प्रमाण-पत्र डाउनलोड करने में त्रुटि हुई।');
+        // यदि लोकल फाइल सुरक्षा (CORS) के कारण इमेज एक्सपोर्ट रुके, तो बिना इमेज रुकावट के तुरंत डाउनलोड करें
+        drawCertificateBaseAndText(ctx, canvas, totalPts, badge, verifyId, null);
+        try {
+          const fallbackUrl = canvas.toDataURL('image/png');
+          const link = document.createElement('a');
+          link.download = `Bhakti_Anugoonj_Certificate_${userName}.png`;
+          link.href = fallbackUrl;
+          document.body.appendChild(link);
+          link.click();
+          document.body.removeChild(link);
+        } catch (e2) {
+          alert('प्रमाण-पत्र डाउनलोड करने में त्रुटि हुई।');
+        }
+      }
+    }
+
+    document.getElementById('download-certificate-btn').addEventListener('click', () => {
+      const canvas = document.getElementById('cert-canvas');
+      const ctx = canvas.getContext('2d');
+      const totalPts = quizPoints + malaPoints;
+      const badge = getBadgeTitle(totalPts);
+      const verifyId = generateVerifyCode(userName, totalPts, totalMalas);
+
+      const headerLogoEl = document.getElementById('app-header-logo');
+      if (loadedLogoImageElement && loadedLogoImageElement.complete && loadedLogoImageElement.naturalWidth > 0) {
+        drawCertificateBaseAndText(ctx, canvas, totalPts, badge, verifyId, loadedLogoImageElement);
+        triggerCanvasDownload(canvas, ctx, totalPts, badge, verifyId);
+      } else if (headerLogoEl && headerLogoEl.complete && headerLogoEl.naturalWidth > 0) {
+        drawCertificateBaseAndText(ctx, canvas, totalPts, badge, verifyId, headerLogoEl);
+        triggerCanvasDownload(canvas, ctx, totalPts, badge, verifyId);
+      } else {
+        const logoImg = new Image();
+        logoImg.onload = function() {
+          drawCertificateBaseAndText(ctx, canvas, totalPts, badge, verifyId, logoImg);
+          triggerCanvasDownload(canvas, ctx, totalPts, badge, verifyId);
+        };
+        logoImg.onerror = function() {
+          drawCertificateBaseAndText(ctx, canvas, totalPts, badge, verifyId, null);
+          triggerCanvasDownload(canvas, ctx, totalPts, badge, verifyId);
+        };
+        logoImg.src = activeLogoUrl;
       }
     });
 
+    // --- DHARMA QUIZ & GOOGLE SHEET SYNC ---
     const SHEET_ID = '1ZNn71F4f4Wyk1lxpnLLkT89bBXGm0uN_FaTGOBloNPY';
     const SHEET_CSV_URL = `https://docs.google.com/spreadsheets/d/${SHEET_ID}/export?format=csv`;
 
@@ -1079,7 +1147,7 @@
       const limit = Math.min(targetCount, quizData.length);
       for (let i = 0; i < limit; i++) {
         const qKey = String(quizData[i].q || '').trim();
-        if (i === 29 && qKey.includes('काशी विश्वनाथ') && getStore('ba_v4_kashi_replayed_v2', 'false') !== 'true') {
+        if (i === 29 && qKey.includes('काशी विश्वनाथ') && getStore('ba_v4_kashi_replayed_v3', 'false') !== 'true') {
           continue;
         }
         if (qKey && !answeredQuestions.includes(qKey)) {
@@ -1099,14 +1167,15 @@
     }
 
     function parseCSV(text) {
+      const cleanText = String(text || '').replace(/^\uFEFF/, '');
       const rows = [];
       let row = [];
       let cur = '';
       let inQuotes = false;
-      for (let i = 0; i < text.length; i++) {
-        const ch = text[i];
+      for (let i = 0; i < cleanText.length; i++) {
+        const ch = cleanText[i];
         if (inQuotes) {
-          if (ch === '"' && text[i + 1] === '"') {
+          if (ch === '"' && cleanText[i + 1] === '"') {
             cur += '"';
             i++;
           } else if (ch === '"') {
@@ -1121,7 +1190,7 @@
             row.push(cur.trim());
             cur = '';
           } else if (ch === '\r' || ch === '\n') {
-            if (ch === '\r' && text[i + 1] === '\n') {
+            if (ch === '\r' && cleanText[i + 1] === '\n') {
               i++;
             }
             if (cur !== '' || row.length > 0) {
@@ -1142,7 +1211,7 @@
       return rows;
     }
 
-    // Google Sheet संरचना:
+    // Google Sheet नियम:
     // कॉलम A (r[0]) = प्रश्न
     // कॉलम B (r[1]) = विकल्प 0 (पहला विकल्प)
     // कॉलम C (r[2]) = विकल्प 1 (दूसरा विकल्प)
@@ -1151,19 +1220,14 @@
     // कॉलम F (r[5]) = सही उत्तर (0, 1, 2, या 3)
     function resolveCorrectAnswerIndex(colFValue, optionsFromBtoE) {
       const raw = String(colFValue !== undefined && colFValue !== null ? colFValue : '').trim();
-
-      // सीधे 0, 1, 2, 3 की जाँच (बिना किसी A/B कन्फ्यूजन के)
       const n = parseInt(raw, 10);
       if (!isNaN(n) && n >= 0 && n <= 3) {
         return n;
       }
-
-      // यदि कभी कॉलम F में नंबर की जगह विकल्प का पूरा टेक्स्ट लिखा हो
       const textMatch = optionsFromBtoE.findIndex(opt => String(opt).trim() === raw);
       if (textMatch !== -1) {
         return textMatch;
       }
-
       return 0;
     }
 
@@ -1223,34 +1287,51 @@
         if (rows.length > 1) {
           const parsedQuestions = [];
           const extraAudios = [];
+          let latestYtFound = false;
+          let latestThoughtFound = false;
 
           for (let i = 1; i < rows.length; i++) {
             const r = rows[i];
-            // r[0]=कॉलम A (प्रश्न), r[1..4]=कॉलम B से E (विकल्प), r[5]=कॉलम F (सही उत्तर: 0, 1, 2, 3)
-            if (r[0] && r[1] && r[2] && r[3] && r[4]) {
-              const optsFromBtoE = [r[1], r[2], r[3], r[4]];
+
+            // कॉलम A से F: सनातन धर्म क्विज़
+            const qText = String(r[0] || '').trim();
+            const o1 = String(r[1] || '').trim();
+            const o2 = String(r[2] || '').trim();
+            const o3 = String(r[3] || '').trim();
+            const o4 = String(r[4] || '').trim();
+
+            if (qText && o1 && o2 && o3 && o4 && qText.toLowerCase() !== 'question' && qText !== 'प्रश्न') {
+              const optsFromBtoE = [o1, o2, o3, o4];
               const ansIdx = resolveCorrectAnswerIndex(r[5], optsFromBtoE);
 
               parsedQuestions.push({
-                q: r[0],
+                q: qText,
                 opts: optsFromBtoE,
                 ans: ansIdx
               });
             }
 
-            if (i === 1 && r[6] && r[6].startsWith('http')) {
-              document.getElementById('home-youtube-link').href = r[6];
-              document.getElementById('video-tab-youtube-link').href = r[6];
+            // कॉलम G: लेटेस्ट YouTube वीडियो लिंक (शीट में जहाँ भी पहला वैध लिंक मिले)
+            if (!latestYtFound && r[6] && String(r[6]).trim().startsWith('http')) {
+              const ytUrl = String(r[6]).trim();
+              document.getElementById('home-youtube-link').href = ytUrl;
+              document.getElementById('video-tab-youtube-link').href = ytUrl;
+              latestYtFound = true;
             }
 
-            if (i === 1 && r[7]) {
-              document.getElementById('home-thought-text').textContent = r[7];
+            // कॉलम H: आज का सुविचार (शीट में जहाँ भी पहला सुविचार मिले)
+            if (!latestThoughtFound && r[7] && String(r[7]).trim() !== '') {
+              document.getElementById('home-thought-text').textContent = String(r[7]).trim();
+              latestThoughtFound = true;
             }
 
+            // कॉलम I और कॉलम J: नए ऑडियो भजन
             if (r[8] && r[9]) {
-              const bTitle = r[8].trim();
-              const bFile = r[9].trim();
+              const bTitle = String(r[8]).trim();
+              const bFile = String(r[9]).trim();
               if (
+                bTitle &&
+                bFile &&
                 bTitle.toLowerCase() !== 'bhajan title' &&
                 bTitle.toLowerCase() !== 'bhajan name' &&
                 bTitle !== 'भजन का नाम' &&
@@ -1324,7 +1405,7 @@
       const qObj = quizData[currentQIndex];
 
       if (qObj.q.includes('काशी विश्वनाथ')) {
-        setStore('ba_v4_kashi_replayed_v2', 'true');
+        setStore('ba_v4_kashi_replayed_v3', 'true');
       }
       recordQuestionAttempt(qObj.q);
       setStore('ba_v4_quiz_idx', currentQIndex + 1);
@@ -1406,7 +1487,7 @@
 
       const qObj = quizData[currentQIndex];
       if (qObj.q.includes('काशी विश्वनाथ')) {
-        setStore('ba_v4_kashi_replayed_v2', 'true');
+        setStore('ba_v4_kashi_replayed_v3', 'true');
       }
 
       const allBtns = document.querySelectorAll('#quiz-options .option-btn');
